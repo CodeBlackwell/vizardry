@@ -1,0 +1,12 @@
+{
+  "name": "vizardry",
+  "version": "1.0.0",
+  "description": "Verifier and retrieval tooling for the Vizardry Claude Code plugin.",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "esbuild": "^0.21.5",
+    "jsdom": "^22.0.0",
+    "typescript": "^5.4.0"
+  }
+}

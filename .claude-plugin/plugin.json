@@ -1,0 +1,9 @@
+{
+  "name": "vizardry",
+  "description": "Observable-grade data visualizations as React components with D3. Ships /datastorm, which profiles a dataset and brainstorms options from conventional to abstract; the routing rule and component contract as a skill; 181 self-contained exemplars with a retrieval index; and a verifier that runs source rules, tsc and a jsdom render over what the model wrote.",
+  "version": "1.0.0",
+  "author": {
+    "name": "LeChristopher Blackwell"
+  },
+  "license": "MIT"
+}
