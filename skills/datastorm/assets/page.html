@@ -1,0 +1,327 @@
+<!--
+  The report shell. Copy it, fill every <!-- FILL --> marker, delete the rest of this comment.
+
+  What is structure and what is yours:
+    STRUCTURE  the grid, the rail, the card anatomy, the three-state theme wiring, the token
+               NAMES. chart-kit.js reads tokens by name, so renaming one breaks every chart.
+    YOURS      the eight hue values marked below, the title, and all the prose. A report that
+               reuses the sample hues for a different dataset looks like a template, because
+               it is one. Re-pick them for the subject and validate them.
+
+  The script tags at the bottom hold the placeholders build.mjs substitutes. Delete the topojson
+  and atlas ones unless something on the page is geographic; it inlines only what it finds.
+
+  Each placeholder must appear exactly once, so do not quote one in a comment — the assembler
+  would fill the comment instead of the script tag, and the page would silently lose a library.
+-->
+<title><!-- FILL: a name, two to four words, specific to this dataset --></title>
+<style>
+:root{
+  /* ---- the eight you choose per dataset. Validate before using:
+         node <skill>/../d3-react-charts/../scripts/validate_palette.js "<hex,hex,...>" --mode light
+         accent-2 / warm are also the diverging poles, so that pair needs the widest CVD gap ---- */
+  --accent:#00707E; --accent-2:#0090A0; --warm:#C2611A; --indigo:#42509E; --olive:#8A7A18;
+  --flag:#9E3B10; --flag-bg:#FBF1EA; --good:#0F6F5C;
+
+  /* ---- derived from the eight: sequential ramp ends, diverging poles + neutral middle,
+         bivariate corners. Keep the names; re-step the values with the hues. ---- */
+  --seq0:#E4EFF1; --seq1:#00646F; --dneg:#C2611A; --dpos:#0090A0; --dmid:#ECEFF1;
+  --bv0:#E8EDEF; --bvA:#0090A0; --bvB:#C2611A;
+
+  /* ---- neutrals: pick a bias toward the accent rather than a pure grey ---- */
+  --ground:#E9ECEF; --surface:#FFFFFF; --surface-2:#F3F5F7; --surface-3:#FAFBFC;
+  --line:#CFD6DD; --line-2:#E4E8EC;
+  --ink:#141A20; --ink-2:#4B5661; --ink-3:#7B8792;
+  --grid:#E2E7EB; --nodata:#DDE2E7;
+
+  --shadow:0 1px 2px rgba(20,26,32,.06),0 6px 18px rgba(20,26,32,.05);
+  --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+/* Dark is stepped separately, not inverted, and validated against its own surface. The two
+   blocks are identical on purpose: the media query serves the un-stamped default state, the
+   attribute block serves an explicit toggle. Losing either one loses a real audience. */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --accent:#3FB8C6; --accent-2:#0E9DAE; --warm:#CE6C26; --indigo:#6675C8; --olive:#A2941C;
+  --flag:#E0764A; --flag-bg:#221812; --good:#3FA98F;
+  --seq0:#12303A; --seq1:#54CBD9; --dneg:#CE6C26; --dpos:#0E9DAE; --dmid:#252D34;
+  --bv0:#1B232A; --bvA:#0E9DAE; --bvB:#CE6C26;
+  --ground:#0E1317; --surface:#161C22; --surface-2:#1C232A; --surface-3:#131920;
+  --line:#2B343C; --line-2:#212930;
+  --ink:#E4E9EE; --ink-2:#9DA9B4; --ink-3:#6E7A85;
+  --grid:#252E36; --nodata:#222A31;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);
+}}
+:root[data-theme="dark"]{
+  --accent:#3FB8C6; --accent-2:#0E9DAE; --warm:#CE6C26; --indigo:#6675C8; --olive:#A2941C;
+  --flag:#E0764A; --flag-bg:#221812; --good:#3FA98F;
+  --seq0:#12303A; --seq1:#54CBD9; --dneg:#CE6C26; --dpos:#0E9DAE; --dmid:#252D34;
+  --bv0:#1B232A; --bvA:#0E9DAE; --bvB:#CE6C26;
+  --ground:#0E1317; --surface:#161C22; --surface-2:#1C232A; --surface-3:#131920;
+  --line:#2B343C; --line-2:#212930;
+  --ink:#E4E9EE; --ink-2:#9DA9B4; --ink-3:#6E7A85;
+  --grid:#252E36; --nodata:#222A31;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.011em}
+a{color:var(--accent)}
+code,.mono{font-family:var(--mono);font-variant-ligatures:none}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+.wrap{display:grid;grid-template-columns:224px minmax(0,1fr);gap:0;max-width:1240px;margin:0 auto}
+.rail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 18px 40px 24px;
+  border-right:1px solid var(--line);font-family:var(--mono);font-size:11.5px;line-height:1.5}
+.rail h5{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin:22px 0 8px;font-weight:500}
+.rail h5:first-child{margin-top:0}
+.rail a{display:flex;gap:8px;padding:3px 0;color:var(--ink-2);text-decoration:none;border-radius:3px}
+.rail a:hover,.rail a:focus-visible{color:var(--accent)}
+.rail a .k{color:var(--ink-3);min-width:22px}
+.rail a.rec .k{color:var(--warm);font-weight:600}
+.main{padding:0 40px 120px;min-width:0}
+
+/* ---------- masthead ---------- */
+.mast{padding:64px 0 34px;border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.mast h1{font-size:clamp(34px,5vw,52px);line-height:1.04;margin:14px 0 0;letter-spacing:-.025em}
+.mast .sub{font-size:19px;color:var(--ink-2);margin:16px 0 0;max-width:62ch;line-height:1.55}
+.src{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:22px;line-height:1.7}
+.src b{color:var(--ink-2);font-weight:500}
+
+/* ---------- generic ---------- */
+section{padding-top:52px}
+section>h2{font-size:26px;letter-spacing:-.02em;padding-bottom:10px;border-bottom:1px solid var(--line)}
+section>h2 .n{font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.08em;
+  margin-left:10px;font-weight:400;vertical-align:middle}
+p{margin:14px 0;max-width:68ch}
+.lede{font-size:17px;color:var(--ink-2)}
+strong{font-weight:650;color:var(--ink)}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 12px;border-bottom:1px solid var(--line-2);vertical-align:top}
+thead th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;background:var(--surface-2);position:sticky;top:0;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{font-size:12px;color:var(--ink)}
+.role{font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.hi{color:var(--warm);font-weight:600}
+.dim{color:var(--ink-3)}
+
+/* ---------- callouts ---------- */
+.call{border-left:3px solid var(--accent-2);background:var(--surface);padding:16px 20px;
+  margin:24px 0;border-radius:0 6px 6px 0;box-shadow:var(--shadow)}
+.call.warn{border-left-color:var(--flag);background:var(--flag-bg)}
+.call h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;margin-bottom:6px}
+.call.warn h4{color:var(--flag)}
+.call p{margin:6px 0 0;font-size:14.5px}
+
+/* ---------- recommendation trio ---------- */
+.recs{display:grid;gap:16px;margin-top:24px}
+.rec{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px 22px;
+  box-shadow:var(--shadow);display:grid;grid-template-columns:44px minmax(0,1fr);gap:18px}
+.rec .rank{font-family:var(--mono);font-size:30px;font-weight:600;color:var(--warm);
+  line-height:1;letter-spacing:-.04em}
+.rec h3{font-size:19px;margin-bottom:4px}
+.rec .fam{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em}
+.rec p{font-size:14.5px;margin:10px 0 0}
+
+/* ---------- option cards ---------- */
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  margin:22px 0;overflow:hidden;box-shadow:var(--shadow);scroll-margin-top:20px}
+.opt>header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  padding:16px 24px;border-bottom:1px solid var(--line-2);background:var(--surface-3)}
+.opt .tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;
+  color:var(--surface);background:var(--ink-2);padding:2px 7px;border-radius:3px}
+.opt.top .tag{background:var(--warm)}
+.opt>header h3{font-size:19px;letter-spacing:-.015em}
+.opt .fam{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-left:auto}
+.opt .body{padding:20px 24px 24px}
+.q{font-family:var(--serif);font-size:17.5px;font-style:italic;color:var(--ink);
+  margin:0 0 18px;max-width:58ch;line-height:1.45}
+.q::before{content:"\201C"}.q::after{content:"\201D"}
+
+figure{margin:0 0 20px;border:1px solid var(--line-2);border-radius:6px;
+  background:var(--surface-3);overflow:hidden}
+.chart{padding:14px 12px 6px;overflow-x:auto}
+.chart svg{display:block;max-width:100%;height:auto}
+figcaption{font-size:12.5px;color:var(--ink-2);padding:9px 16px 12px;border-top:1px solid var(--line-2);
+  line-height:1.5;background:var(--surface)}
+figcaption b{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;display:block;margin-bottom:3px}
+
+dl.fields{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:0 20px;margin:0;font-size:14.5px}
+dl.fields dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);padding:9px 0 0;white-space:nowrap;border-bottom:1px solid var(--line-2)}
+dl.fields dd{margin:0;padding:8px 0;border-bottom:1px solid var(--line-2)}
+dl.fields dt:last-of-type,dl.fields dd:last-of-type{border-bottom:0}
+.fail{margin-top:16px;border-left:3px solid var(--flag);background:var(--flag-bg);
+  padding:12px 18px;border-radius:0 5px 5px 0}
+.fail h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--flag);font-weight:500}
+.fail p{font-size:14px;margin:5px 0 0}
+.ex{font-family:var(--mono);font-size:12.5px}
+.ex a,.ex span.e{background:var(--surface-2);border:1px solid var(--line-2);border-radius:3px;
+  padding:1px 6px;color:var(--accent);text-decoration:none;margin-right:5px;display:inline-block}
+
+/* ---------- chart furniture: chart-kit.js writes into these ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:2px 4px 10px;
+  font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.legend i{width:11px;height:11px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:-1px}
+.ramp{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.ramp .bar{height:9px;width:120px;border-radius:2px;border:1px solid var(--line-2)}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px 12px;font-family:var(--mono);font-size:11px}
+.ctrl button{font:inherit;background:var(--surface);color:var(--ink-2);border:1px solid var(--line);
+  padding:3px 9px;border-radius:4px;cursor:pointer}
+.ctrl button:hover{border-color:var(--accent-2);color:var(--accent)}
+.ctrl button[aria-pressed="true"]{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+.ctrl select{font:inherit;background:var(--surface);color:var(--ink-2);border:1px solid var(--line);
+  padding:3px 6px;border-radius:4px}
+.ctrl .lbl{color:var(--ink-3);align-self:center}
+#tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:99;
+  background:var(--ink);color:var(--ground);font-family:var(--mono);font-size:11.5px;line-height:1.5;
+  padding:7px 10px;border-radius:5px;max-width:280px;box-shadow:0 4px 14px rgba(0,0,0,.28)}
+#tip b{color:#fff;font-weight:600}
+svg text{font-family:var(--mono);fill:var(--ink-2)}
+.ax line,.ax path{stroke:var(--line)}
+.ax text{font-size:10px;fill:var(--ink-3)}
+.gl{stroke:var(--grid);stroke-width:1}
+
+button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:960px){
+  .wrap{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0 18px;padding:20px 24px}
+  .main{padding:0 24px 80px}
+}
+footer{margin-top:70px;padding-top:26px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:11.5px;color:var(--ink-3);line-height:1.8}
+</style>
+
+<div id="tip"></div>
+<div class="wrap">
+<nav class="rail">
+  <h5>Recommended</h5>
+  <a class="rec" href="#a1"><span class="k">01</span><span><!-- FILL --></span></a>
+  <!-- FILL: ranks 02 and 03 -->
+  <h5>The data</h5>
+  <a href="#data"><span class="k">&sect;</span><span>Profile</span></a>
+  <a href="#shape"><span class="k">&sect;</span><span>Shape signature</span></a>
+  <h5>Conventional</h5>
+  <a href="#c1"><span class="k">C1</span><span><!-- FILL --></span></a>
+  <!-- FILL: one line per option, C*, A*, X* -->
+  <h5>Closing</h5>
+  <a href="#rejected"><span class="k">&sect;</span><span>Rejected</span></a>
+  <a href="#notes"><span class="k">&sect;</span><span>Notes on the data</span></a>
+</nav>
+
+<main class="main">
+<header class="mast">
+  <div class="eyebrow">Visualization brainstorm</div>
+  <h1><!-- FILL: same as the title tag --></h1>
+  <p class="sub"><!-- FILL: one sentence, what this page is --></p>
+  <div class="src">
+    <b>Source</b> <!-- FILL: where the file came from, and its licence --><br>
+    <b>File</b> <code><!-- FILL --></code> &middot; <!-- FILL: size, rows x columns --><br>
+    <b>Method</b> Every number on this page was measured from the file.
+  </div>
+</header>
+
+<section id="data">
+<h2>The data<span class="n">measured, not assumed</span></h2>
+<p class="lede"><strong>Grain: <!-- FILL: what one row is --></strong> <!-- FILL: why that matters here --></p>
+
+<!-- Anything found while profiling that constrains every option below goes here, before the
+     table. A reader who meets it after the eighteen options meets it too late. -->
+<div class="call warn">
+  <h4><!-- FILL --></h4>
+  <p><!-- FILL --></p>
+</div>
+
+<div class="tw"><table>
+<thead><tr><th>Column</th><th>Role</th><th class="n">Card.</th><th class="n">Null</th><th>Range / notes</th></tr></thead>
+<tbody>
+<tr><td><code><!-- FILL --></code></td><td class="role"><!-- FILL --></td><td class="n"></td><td class="n"></td><td></td></tr>
+</tbody></table></div>
+
+<!-- Effect sizes and the correlation structure are charts, not prose. They are what decides
+     which options are honest, so they belong above the options rather than in an appendix. -->
+<figure><div class="chart" data-chart="effects"></div>
+<figcaption><b><!-- FILL --></b> <!-- FILL --></figcaption></figure>
+</section>
+
+<section id="shape">
+<h2>Shape signature<span class="n">what it rules in and out</span></h2>
+<div class="call"><p class="mono" style="font-size:14px;margin:0;line-height:1.7"><!-- FILL --></p></div>
+<p><strong>Rules IN:</strong> <!-- FILL --></p>
+<p><strong>Rules OUT, hard:</strong> <!-- FILL --></p>
+</section>
+
+<section id="recommended">
+<h2>Recommended<span class="n">build these three, in this order</span></h2>
+<div class="recs">
+  <div class="rec"><div class="rank">01</div><div>
+    <h3><a href="#a1"><!-- FILL --></a></h3>
+    <div class="fam"><!-- FILL: family --></div>
+    <p><!-- FILL: why it is first --></p>
+  </div></div>
+</div>
+</section>
+
+<section id="conventional">
+<h2>Conventional<span class="n">4-6</span></h2>
+<p class="lede"><!-- FILL --></p>
+
+<!-- ===== the option card. One per option, 12 to 20 of them. Add class="top" to the header's
+     card for the ranked three. The <dl> carries the nine fields; none is optional. ===== -->
+<article class="opt" id="c1"><header><span class="tag">C1</span><h3><!-- FILL --></h3><span class="fam"><!-- FILL --></span></header>
+<div class="body">
+<p class="q"><!-- FILL: the question, as the user would say it out loud --></p>
+<figure><div class="chart" data-chart="c1"></div>
+<figcaption><b><!-- FILL: what the example shows --></b> <!-- FILL: what it turned out to say --></figcaption></figure>
+<dl class="fields">
+<dt>Encoding</dt><dd><!-- FILL: column to channel, explicitly --></dd>
+<dt>Why this data</dt><dd><!-- FILL: cite the profile --></dd>
+<dt>Color</dt><dd><!-- FILL: the scale, and why that scale --></dd>
+<dt>Interaction</dt><dd><!-- FILL: what it lets the reader ask --></dd>
+<dt>Exemplar</dt><dd class="ex"><span class="e"><!-- FILL: corpus id --></span></dd>
+</dl>
+<div class="fail"><h4>Failure mode</h4><p><!-- FILL: when this chart lies or collapses --></p></div>
+</div></article>
+</section>
+
+<section id="analytical"><h2>Analytical<span class="n">4-8</span></h2></section>
+<section id="creative"><h2>Creative / abstract<span class="n">4-6</span></h2></section>
+
+<section id="rejected">
+<h2>Considered and rejected<span class="n">with reasons</span></h2>
+<div class="tw"><table>
+<thead><tr><th>Option</th><th>Why not</th></tr></thead>
+<tbody><tr><td><!-- FILL --></td><td><!-- FILL --></td></tr></tbody>
+</table></div>
+</section>
+
+<section id="notes">
+<h2>Notes on the data<span class="n">what changes what is drawable</span></h2>
+<p><!-- FILL --></p>
+</section>
+
+<footer><!-- FILL: how the page was built, and anything not verified --></footer>
+</main>
+</div>
+
+<script>/*D3*/</script>
+<script>/*TOPO*/</script>
+<script>window.ATLAS=/*ATLAS*/;</script>
+<script>window.CD=/*DATA*/;</script>
+<script>/*KIT*/</script>
+<script>/*CHARTS*/</script>

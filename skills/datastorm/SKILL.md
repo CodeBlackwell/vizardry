@@ -1,16 +1,21 @@
 ---
 name: datastorm
-description: Brainstorm visualization options for a dataset — conventional through creative and abstract — grounded in the measured shape of the data. Use when someone has data and does not yet know what to draw, asks "how should I visualize this", wants more options than the obvious bar chart, or wants to find the deeper insight hiding in a table.
+description: Brainstorm visualization options for a dataset — conventional through creative and abstract — grounded in the measured shape of the data, and delivered as a self-contained HTML report in which every option is drawn live from the real data. Use when someone has data and does not yet know what to draw, asks "how should I visualize this", wants more options than the obvious bar chart, or wants to find the deeper insight hiding in a table.
 ---
 
 # Datastorm
 
-Given a dataset, produce **`data-visualization-brainstorm.md`**: a wide, ranked field of ways to
-draw it, each one traced back to something measured in the data rather than to a chart-type list.
+Given a dataset, produce **a report page**: a wide, ranked field of ways to draw it, each one
+traced back to something measured in the data rather than to a chart-type list, and each one
+**shown as a live chart drawn from the real data**.
 
 The failure this exists to prevent is the three-option answer — bar, line, scatter — which is what
 a reader gets when the recommender never looked at the data. Breadth is the product. So is depth:
 an option nobody can act on is not an option.
+
+The worked examples are what keep the second half honest. An option that is only described can
+claim anything; an option that is drawn either works or visibly does not, and the difference
+shows up in its own failure-mode field.
 
 ## The procedure
 
@@ -101,7 +106,7 @@ Aim for **12 to 20 total**, distributed roughly:
   honest**. An abstract option that cannot be decoded is decoration, and the report should say so
   rather than list it.
 
-**Each option gets all eight of these.** An option missing any of them is not thought through:
+**Each option gets all nine of these.** An option missing any of them is not thought through:
 
 1. **Name and family** — what it is called, so the user can search for more of it.
 2. **The question it answers** — phrased the way the user would ask it out loud. If two options
@@ -118,6 +123,9 @@ Aim for **12 to 20 total**, distributed roughly:
    paradox in an aggregate. **Every option has one.** An option listed without a failure mode is
    the one that will be built and then quietly abandoned.
 8. **Exemplar** — a chart id from the sibling corpus, so the user can go straight to working code.
+9. **A worked example** — the chart itself, drawn from this dataset, on the page. Not a mockup and
+   not demo data. This is the field that fails loudest: an option whose example cannot be drawn is
+   an option that was never real, and finding that out here is the point.
 
 ### 5. Find the exemplars
 
@@ -146,32 +154,50 @@ hard part back.
 Also list **what was considered and rejected**, with the reason. This is the part that proves the
 space was actually searched, and it stops the same dead end being proposed again next week.
 
+### 7. Build the page
+
+**Read `references/html-report.md` before writing a line of it.** It is the build procedure: the
+five files, the assembler, the layout contract, and the failures that are only visible once the
+page is rendered. `assets/` ships the document shell, the chart runtime and the assembler, so the
+work is the prose, the aggregates and the twelve to twenty render functions — not the scaffolding.
+
+Expect the examples to change the analysis. A ranking flattens once it is drawn, a matrix turns
+out to be mostly empty, a number written before the chart existed turns out to be wrong. Fix the
+text when that happens, and say so when you hand the page over.
+
 ## Output
 
-One file, `data-visualization-brainstorm.md`, in the user's working directory unless they name a
-path. Structure:
+**One self-contained HTML file**, `<dataset>-brainstorm.html`, in the user's working directory
+unless they name a path. Libraries, data, styles and charts are all inlined; nothing is fetched.
+Sections, in order:
 
-```markdown
-# Data visualization brainstorm — <dataset>
-
-## The data                 profile as measured: grain, rows, and the column table from step 2
-## Shape signature          one line, plus what it rules in and out
-## Recommended              top 3 ranked, with the reasoning, and what to build first
-## Conventional             4-6 options, eight fields each
-## Analytical               4-8 options
-## Creative / abstract      4-6 options
-## Considered and rejected  with reasons
-## Notes on the data        anything found while profiling that changes what is drawable —
-                            missingness, outliers, a suspicious grain, a column that is
-                            secretly an identifier
+```
+The data                 profile as measured: grain, rows, the column table from step 2, and
+                         the effect sizes and correlation structure as charts
+Shape signature          one line, plus what it rules in and out
+Recommended              top 3 ranked, with the reasoning, and what to build first
+Conventional             4-6 option cards, nine fields each
+Analytical               4-8 cards
+Creative / abstract      4-6 cards
+Considered and rejected  with reasons
+Notes on the data        anything found while profiling that changes what is drawable —
+                         missingness, outliers, a suspicious grain, a column that is
+                         secretly an identifier
 ```
 
-Then tell the user the path and the top recommendation. Do not paste the whole file back.
+Publish it as an Artifact and give the user the URL alongside the path, then the top
+recommendation, what the examples changed, and anything left unverified. Do not paste the file
+back.
+
+Write the markdown version only if the user asks for one. The page is the report.
 
 ## Rules
 
 - **Measured, not assumed.** Every claim about the data traces to the profile. If a number was
-  not measured, do not write it.
+  not measured, do not write it. The same rule binds the examples: nothing on the page is a
+  hardcoded finding, and a chart that states which cells are empty computes which cells are empty.
+- **Every option is drawn.** A described option is a claim; a drawn one is a result. If an option
+  cannot be drawn from this data, it is not an option — move it to the rejected list and say why.
 - **Color and motion by default.** A static grayscale option needs a reason — print, a tiny
   multiple, a deliberately quiet reference chart. See `references/color-and-motion.md`.
 - **The abstract band is not a licence to be unreadable.** Novelty that costs decoding accuracy

@@ -8,7 +8,7 @@ actually works.
 
 | | |
 |---|---|
-| **`/datastorm`** | Profiles a dataset — one you name, or one it finds and reads — and writes `data-visualization-brainstorm.md`: 12 to 20 options from conventional through creative, each with its encoding, color scale, interaction, failure mode, and an exemplar to build it from. |
+| **`/datastorm`** | Profiles a dataset — one you name, or one it finds and reads — and writes a self-contained HTML report: 12 to 20 options from conventional through creative, each with its encoding, color scale, interaction, failure mode, an exemplar to build it from, and **the chart itself, drawn live from the real data**. |
 | **The dialect** | React owns rendering, D3 owns math. The routing rule, its five escape triggers, the component contract, and the React 18 hazards that do not exist in vanilla D3. Always in context. |
 | **181 exemplars** | Every one a single self-contained `.tsx` file that renders on its own, takes its dataset as a prop, and embeds its own demo data. No network, no fetch. |
 | **A verifier** | Source rules, `tsc`, and a real jsdom render over what the model wrote. Runs on any `.tsx` in any repo. |

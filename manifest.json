@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/build-plugin.mjs",
   "purpose": "Content hashes of every shipped file. `just check` recomputes these from the gallery and fails if they differ, because an exemplar is a copy and a copy rots silently.",
-  "count": 200,
+  "count": 204,
   "exemplars": 181,
   "sha256_16": {
     ".claude-plugin/marketplace.json": "f9405351d5e1d52c",
@@ -9,7 +9,7 @@
     ".gitignore": "008516bb61b96fcc",
     "LICENSE": "7bc91f3b9cd4bf97",
     "package.json": "8ebb21cca54599a5",
-    "README.md": "39775e5abcf67af1",
+    "README.md": "6c71c86f1bfeb382",
     "skills/d3-react-charts/bin/chartRules.ts": "21d60d9524d2bb34",
     "skills/d3-react-charts/bin/retrieve.mjs": "36e68d2f76f2a622",
     "skills/d3-react-charts/bin/verify.mjs": "481fa0dfb76fb7aa",
@@ -201,8 +201,12 @@
     "skills/d3-react-charts/references/using-this-skill.md": "1df2e91bebc70c39",
     "skills/d3-react-charts/references/verification.md": "d26a490984f5c7fa",
     "skills/d3-react-charts/SKILL.md": "9dd9b486465d4b95",
+    "skills/datastorm/assets/build.mjs": "22ea08afd85f9b2d",
+    "skills/datastorm/assets/chart-kit.js": "be815d4abc25fa9d",
+    "skills/datastorm/assets/page.html": "c2303f975f2b64c1",
     "skills/datastorm/references/color-and-motion.md": "a4b5abafc09d8319",
+    "skills/datastorm/references/html-report.md": "cce31a6cd6d578c8",
     "skills/datastorm/references/shape-to-options.md": "63697533094e23c1",
-    "skills/datastorm/SKILL.md": "54734755624a2085"
+    "skills/datastorm/SKILL.md": "c2aaa4247da4b432"
   }
 }
