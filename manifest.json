@@ -5,10 +5,10 @@
   "exemplars": 181,
   "sha256_16": {
     ".claude-plugin/marketplace.json": "f9405351d5e1d52c",
-    ".claude-plugin/plugin.json": "480eafba9de29df4",
+    ".claude-plugin/plugin.json": "d7d02efdf2952ab9",
     ".gitignore": "008516bb61b96fcc",
     "LICENSE": "7bc91f3b9cd4bf97",
-    "package.json": "8ebb21cca54599a5",
+    "package.json": "4ce2595f659b07d5",
     "README.md": "6c71c86f1bfeb382",
     "skills/d3-react-charts/bin/chartRules.ts": "21d60d9524d2bb34",
     "skills/d3-react-charts/bin/retrieve.mjs": "36e68d2f76f2a622",
