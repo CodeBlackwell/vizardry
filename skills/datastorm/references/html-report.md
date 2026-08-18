@@ -66,9 +66,17 @@ Fill every marker in it. What you supply beyond the prose:
   masthead. It is how the page is identified in a list of many.
 - **The palette.** Eight hues, marked at the top of the token block. **Re-pick them for the
   subject** — the sample values are one report's answer, and reusing them makes every dataset
-  look like the same dataset. Then validate rather than eyeball, with the `dataviz` skill's
-  `scripts/validate_palette.js`. The accent and warm hues double as the diverging poles, so that
-  pair needs the widest separation under simulated color-vision deficiency.
+  look like the same dataset. Then validate rather than eyeball, with the validator that ships
+  beside the shell — run it once per theme, against that theme's surface:
+
+  ```bash
+  node <assets>/validate-palette.mjs "#00707E,#0090A0,#C2611A,..." --surface "#FFFFFF"
+  ```
+
+  Pass the mark hues in token order (accent, accent-2, warm, indigo, olive, flag, good — not
+  flag-bg, which is a background tint). It gates on contrast against the surface, on
+  near-identical pairs under common color-vision deficiencies, and on the diverging poles —
+  the accent-2 and warm hues carry polarity alone, so that pair needs the widest CVD gap.
 - **The rail.** One line per option, grouped by band, with the ranked three pinned at the top.
   It is the table of contents for a page that is genuinely long.
 
@@ -133,22 +141,29 @@ Working inside that harness:
 
 ## Verifying it
 
-Open the built file and **look at it**. Then paste this into the console — it catches the four
-things that are invisible in a screenshot:
+**Run the verifier first.** It executes the page's scripts in jsdom and gates the whole
+structural contract — every chart drew, all nine fields per card, sections, rail, exemplar
+ids, mojibake — with an exit code, so it runs headless and a FAIL is a build stop:
+
+```bash
+node <skill>/bin/verify-report.mjs report.html
+```
+
+Its warnings matter too: a large numeral in prose that is not in `chartdata.json` is usually a
+number that was typed instead of computed.
+
+jsdom does no layout, so what remains is the part only a browser shows. Open the built file,
+paste this in the console, and walk the page:
 
 ```js
 const nodes = [...document.querySelectorAll('[data-chart]')];
-console.log('charts drawn:', nodes.filter(n => n.querySelector('svg,canvas')).length, '/', nodes.length);
-console.log('failed:', nodes.filter(n => !n.querySelector('svg,canvas')).map(n => n.dataset.chart));
 console.log('too wide:', nodes.filter(n => n.scrollWidth > n.clientWidth).map(n => n.dataset.chart));
 console.log('body overflow:', document.body.scrollWidth - innerWidth);
-console.log('mojibake:', (document.body.innerText.match(/Ã.|â/g) || []).length);
 ```
 
-Then walk the page: label collisions, clipped axis text, marks pushed outside their frame, and a
-category name too long for the margin it was given. Toggle to dark and check the second theme
-resolved as a set. Click every control; a button that renders and does nothing is worse than no
-button.
+Look for label collisions, clipped axis text, marks pushed outside their frame, and a category
+name too long for the margin it was given. Toggle to dark and check the second theme resolved
+as a set. Click every control; a button that renders and does nothing is worse than no button.
 
 **Do not verify by driving a browser in a background tab.** Chrome throttles paint and animation
 frames there, so screenshots come back blank and a scripted scroll plus a frame wait can hang

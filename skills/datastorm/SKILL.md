@@ -47,8 +47,16 @@ for c in df.columns:
 " path/to/data.csv
 ```
 
-Any equivalent works — `duckdb`, `jq` over JSON, a node script. What matters is that every number
-in the report came from the file.
+Any equivalent works — what matters is that every number in the report came from the file. For
+the other common formats, the same loop profiles anything once the read line changes, and
+`duckdb` covers the two pandas reads badly:
+
+```bash
+df = pd.read_json(path)                    # JSON array of objects
+df = pd.read_json(path, lines=True)        # NDJSON, one object per line
+duckdb -c "SUMMARIZE SELECT * FROM 'data.parquet'"                    # parquet, no pyarrow needed
+duckdb -c "SUMMARIZE SELECT * FROM sqlite_scan('data.db', 'table')"   # sqlite; .tables first
+```
 
 **If the data cannot be read at all** — no file, a binary format with no reader, a URL behind
 auth — stop and say so. Then offer to proceed from a shape the user describes. Never invent a
@@ -165,6 +173,17 @@ Expect the examples to change the analysis. A ranking flattens once it is drawn,
 out to be mostly empty, a number written before the chart existed turns out to be wrong. Fix the
 text when that happens, and say so when you hand the page over.
 
+**Then gate the page before delivering it:**
+
+```bash
+node <skill>/bin/verify-report.mjs <name>-brainstorm.html
+```
+
+It runs the page's own scripts and fails on any chart that did not draw, any card missing one
+of the nine fields, a missing section, a rail that skips an option, an exemplar id the corpus
+does not have, or mojibake. A FAIL is a build stop — fix and rebuild until it exits green; the
+human walk in `references/html-report.md` covers only what jsdom cannot see (layout).
+
 ## Output
 
 **One self-contained HTML file**, `<dataset>-brainstorm.html`, in the user's working directory
@@ -185,9 +204,9 @@ Notes on the data        anything found while profiling that changes what is dra
                          secretly an identifier
 ```
 
-Publish it as an Artifact and give the user the URL alongside the path, then the top
-recommendation, what the examples changed, and anything left unverified. Do not paste the file
-back.
+The page ships only after `verify-report.mjs` exits green. Publish it as an Artifact and give
+the user the URL alongside the path, then the top recommendation, what the examples changed,
+and anything left unverified. Do not paste the file back.
 
 Write the markdown version only if the user asks for one. The page is the report.
 

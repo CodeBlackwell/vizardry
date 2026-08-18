@@ -110,18 +110,25 @@ function poissonDiscSamples(
   const active: Point[] = [];
   const steps: PoissonStep[] = [];
 
-  const far = (x: number, y: number): boolean => {
-    const i0 = Math.max((x / cellSize | 0) - 2, 0);
-    const j0 = Math.max((y / cellSize | 0) - 2, 0);
-    const i1 = Math.min((x / cellSize | 0) + 3, gridWidth);
-    const j1 = Math.min((y / cellSize | 0) + 3, gridHeight);
-    for (let j = j0; j < j1; ++j) {
-      for (let i = i0; i < i1; ++i) {
-        const s = grid[j * gridWidth + i];
-        if (s && (s[0] - x) * (s[0] - x) + (s[1] - y) * (s[1] - y) < radius2) return false;
+  // Cells are radius/sqrt(2) wide, so any conflicting sample sits within two cells: scan the
+  // 5x5 block of offsets around the candidate's cell, skipping offsets that leave the grid.
+  const crowded = (x: number, y: number): boolean => {
+    const column = Math.floor(x / cellSize);
+    const row = Math.floor(y / cellSize);
+    for (let rowOffset = -2; rowOffset <= 2; rowOffset++) {
+      const r = row + rowOffset;
+      if (r < 0 || r >= gridHeight) continue;
+      for (let columnOffset = -2; columnOffset <= 2; columnOffset++) {
+        const c = column + columnOffset;
+        if (c < 0 || c >= gridWidth) continue;
+        const neighbour = grid[r * gridWidth + c];
+        if (!neighbour) continue;
+        const dx = neighbour[0] - x;
+        const dy = neighbour[1] - y;
+        if (dx * dx + dy * dy < radius2) return true;
       }
     }
-    return true;
+    return false;
   };
 
   const emit = (x: number, y: number, parent: Point | null) => {
@@ -143,7 +150,7 @@ function poissonDiscSamples(
       const r = Math.sqrt(random() * annulus + radius2);
       const x = s[0] + r * Math.cos(angle);
       const y = s[1] + r * Math.sin(angle);
-      if (x >= 0 && x < 1 && y >= 0 && y < boxHeight && far(x, y)) {
+      if (x >= 0 && x < 1 && y >= 0 && y < boxHeight && !crowded(x, y)) {
         emit(x, y, s);
         placed = true;
       }

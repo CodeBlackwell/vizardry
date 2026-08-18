@@ -43,7 +43,46 @@ type QuicksortFrame = {
 
 const quicksortSize = 48;
 
-/** Bostock's median-index quicksort, instrumented to emit a frame per mutation. */
+/**
+ * Hoare-partition quicksort over distinct values, instrumented via callbacks so both tracers
+ * share one core. The median-of-three pivot is never the span's extreme (for a 2-span the
+ * duplicated middle sample makes it the minimum), which is what guarantees both recursions
+ * strictly shrink.
+ */
+function quicksort(
+  array: number[],
+  onSpan: (lo: number, hi: number, pivot: number) => void,
+  onSwap: (i: number, j: number) => void
+) {
+  const pivotOf = (lo: number, hi: number): number => {
+    const first = array[lo];
+    const middle = array[(lo + hi - 1) >> 1];
+    const last = array[hi - 1];
+    if (first < middle !== first < last) return first;
+    if (middle < first !== middle < last) return middle;
+    return last;
+  };
+
+  const sort = (lo: number, hi: number) => {
+    if (hi - lo < 2) return;
+    const pivot = pivotOf(lo, hi);
+    onSpan(lo, hi, pivot);
+    let below = lo - 1;
+    let above = hi;
+    for (;;) {
+      while (array[++below] < pivot);
+      while (array[--above] > pivot);
+      if (below >= above) break;
+      [array[below], array[above]] = [array[above], array[below]];
+      onSwap(below, above);
+    }
+    sort(lo, above + 1);
+    sort(above + 1, hi);
+  };
+
+  sort(0, array.length);
+}
+
 function traceQuicksort(input: number[]): QuicksortFrame[] {
   const array = input.slice();
   const frames: QuicksortFrame[] = [];
@@ -52,34 +91,17 @@ function traceQuicksort(input: number[]): QuicksortFrame[] {
   let pivotValue = -1;
   const record = () => frames.push({ array: array.slice(), left, right, pivotValue });
 
-  function swap(i: number, j: number) {
-    if (i === j) return;
-    [array[i], array[j]] = [array[j], array[i]];
-    record();
-  }
-
-  function partition(lo: number, hi: number, pivot: number): number {
-    const v = array[pivot];
-    swap(pivot, --hi);
-    for (let i = lo; i < hi; ++i) if (array[i] <= v) swap(i, lo++);
-    swap(lo, hi);
-    return lo;
-  }
-
-  function recurse(lo: number, hi: number) {
-    if (lo >= hi - 1) return;
-    const pivot = (lo + hi) >> 1;
-    left = lo;
-    right = hi;
-    pivotValue = array[pivot];
-    record();
-    const split = partition(lo, hi, pivot);
-    recurse(lo, split);
-    recurse(split + 1, hi);
-  }
-
   record();
-  recurse(0, array.length);
+  quicksort(
+    array,
+    (lo, hi, pivot) => {
+      left = lo;
+      right = hi;
+      pivotValue = pivot;
+      record();
+    },
+    record
+  );
   left = 0;
   right = array.length;
   pivotValue = -1;
@@ -98,29 +120,12 @@ const threadSize = 20;
 
 /** Same quicksort, recorded as index histories: every swap braids two threads together. */
 function traceThreads(input: number[]): { value: number; steps: ThreadStep[] }[] {
-  const array = input.slice();
   const swaps: [number, number][] = [];
-
-  function swap(i: number, j: number) {
-    if (i === j) return;
-    [array[i], array[j]] = [array[j], array[i]];
-    swaps.push([i, j]);
-  }
-
-  function partition(lo: number, hi: number, pivot: number): number {
-    const v = array[pivot];
-    swap(pivot, --hi);
-    for (let i = lo; i < hi; ++i) if (array[i] <= v) swap(i, lo++);
-    swap(lo, hi);
-    return lo;
-  }
-
-  (function recurse(lo: number, hi: number) {
-    if (lo >= hi - 1) return;
-    const split = partition(lo, hi, (lo + hi) >> 1);
-    recurse(lo, split);
-    recurse(split + 1, hi);
-  })(0, array.length);
+  quicksort(
+    input.slice(),
+    () => {},
+    (i, j) => swaps.push([i, j])
+  );
 
   const order = input.slice();
   const steps: ThreadStep[][] = input.map(() => []);

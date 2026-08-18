@@ -1,5 +1,7 @@
 <!--
-  The report shell. Copy it, fill every <!-- FILL --> marker, delete the rest of this comment.
+  The report shell. Copy it, fill every FILL marker, delete the rest of this comment.
+  (The markers are written as HTML comments below; never quote one inside this block, since
+  its arrow would close this comment early and leak the instructions as visible page text.)
 
   What is structure and what is yours:
     STRUCTURE  the grid, the rail, the card anatomy, the three-state theme wiring, the token
@@ -18,7 +20,7 @@
 <style>
 :root{
   /* ---- the eight you choose per dataset. Validate before using:
-         node <skill>/../d3-react-charts/../scripts/validate_palette.js "<hex,hex,...>" --mode light
+         node <skill>/assets/validate-palette.mjs "<hex,hex,...>" --surface "#FFFFFF"
          accent-2 / warm are also the diverging poles, so that pair needs the widest CVD gap ---- */
   --accent:#00707E; --accent-2:#0090A0; --warm:#C2611A; --indigo:#42509E; --olive:#8A7A18;
   --flag:#9E3B10; --flag-bg:#FBF1EA; --good:#0F6F5C;
@@ -43,7 +45,7 @@
    blocks are identical on purpose: the media query serves the un-stamped default state, the
    attribute block serves an explicit toggle. Losing either one loses a real audience. */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --accent:#3FB8C6; --accent-2:#0E9DAE; --warm:#CE6C26; --indigo:#6675C8; --olive:#A2941C;
+  --accent:#3FB8C6; --accent-2:#0E9DAE; --warm:#CE6C26; --indigo:#6675C8; --olive:#B7AC3A;
   --flag:#E0764A; --flag-bg:#221812; --good:#3FA98F;
   --seq0:#12303A; --seq1:#54CBD9; --dneg:#CE6C26; --dpos:#0E9DAE; --dmid:#252D34;
   --bv0:#1B232A; --bvA:#0E9DAE; --bvB:#CE6C26;
@@ -54,7 +56,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);
 }}
 :root[data-theme="dark"]{
-  --accent:#3FB8C6; --accent-2:#0E9DAE; --warm:#CE6C26; --indigo:#6675C8; --olive:#A2941C;
+  --accent:#3FB8C6; --accent-2:#0E9DAE; --warm:#CE6C26; --indigo:#6675C8; --olive:#B7AC3A;
   --flag:#E0764A; --flag-bg:#221812; --good:#3FA98F;
   --seq0:#12303A; --seq1:#54CBD9; --dneg:#CE6C26; --dpos:#0E9DAE; --dmid:#252D34;
   --bv0:#1B232A; --bvA:#0E9DAE; --bvB:#CE6C26;
@@ -282,20 +284,21 @@ footer{margin-top:70px;padding-top:26px;border-top:1px solid var(--line);
 <p class="lede"><!-- FILL --></p>
 
 <!-- ===== the option card. One per option, 12 to 20 of them. Add class="top" to the header's
-     card for the ranked three. The <dl> carries the nine fields; none is optional. ===== -->
-<article class="opt" id="c1"><header><span class="tag">C1</span><h3><!-- FILL --></h3><span class="fam"><!-- FILL --></span></header>
+     card for the ranked three. The nine fields each carry a data-field attribute; none is
+     optional, and verify-report.mjs fails a card missing or leaving any of them empty. ===== -->
+<article class="opt" id="c1"><header><span class="tag">C1</span><h3 data-field="name"><!-- FILL --></h3><span class="fam" data-field="family"><!-- FILL --></span></header>
 <div class="body">
-<p class="q"><!-- FILL: the question, as the user would say it out loud --></p>
+<p class="q" data-field="question"><!-- FILL: the question, as the user would say it out loud --></p>
 <figure><div class="chart" data-chart="c1"></div>
 <figcaption><b><!-- FILL: what the example shows --></b> <!-- FILL: what it turned out to say --></figcaption></figure>
 <dl class="fields">
-<dt>Encoding</dt><dd><!-- FILL: column to channel, explicitly --></dd>
-<dt>Why this data</dt><dd><!-- FILL: cite the profile --></dd>
-<dt>Color</dt><dd><!-- FILL: the scale, and why that scale --></dd>
-<dt>Interaction</dt><dd><!-- FILL: what it lets the reader ask --></dd>
-<dt>Exemplar</dt><dd class="ex"><span class="e"><!-- FILL: corpus id --></span></dd>
+<dt>Encoding</dt><dd data-field="encoding"><!-- FILL: column to channel, explicitly --></dd>
+<dt>Why this data</dt><dd data-field="why"><!-- FILL: cite the profile --></dd>
+<dt>Color</dt><dd data-field="color"><!-- FILL: the scale, and why that scale --></dd>
+<dt>Interaction</dt><dd data-field="interaction"><!-- FILL: what it lets the reader ask --></dd>
+<dt>Exemplar</dt><dd class="ex" data-field="exemplar"><span class="e"><!-- FILL: corpus id --></span></dd>
 </dl>
-<div class="fail"><h4>Failure mode</h4><p><!-- FILL: when this chart lies or collapses --></p></div>
+<div class="fail"><h4>Failure mode</h4><p data-field="failure"><!-- FILL: when this chart lies or collapses --></p></div>
 </div></article>
 </section>
 
