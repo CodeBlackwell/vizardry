@@ -117,7 +117,10 @@ Working inside that harness:
   every ramp are where a fixed threshold gets it wrong. Set that ink as an inline `style`,
   never a `fill` attribute: the shell's `svg text{fill:var(--ink-2)}` rule outranks a
   presentation attribute and silently eats it. Make the label bold so it survives the fill,
-  and budget the fit for the weight — bold glyphs run ~6.9 px/char, not 6.4.
+  and budget the fit for the weight — bold glyphs run ~6.9 px/char, not 6.4. Where a cell is
+  wide enough, carry its share of the total beside the name (bold name, lighter share, re-set
+  every frame) so the chart is numerate without the tooltip; drop the share, then the label,
+  as the cell narrows.
 - **Fixed widths, not a resize observer.** The charts are documents, not a responsive app. Give
   each one a width in the 640-880 range; the `.chart` wrapper scrolls if it overflows.
 - **Canvas past a few thousand marks** — a SPLOM, parallel coordinates, a Voronoi field. SVG for
@@ -130,7 +133,7 @@ Working inside that harness:
 The animation policy is absolute: **nothing autoplays and nothing loops uninvited.** Every
 animated example is pausable, scrubbable and replayable, and looping is a toggle the reader
 presses. `K.transport(el, n, draw, opts)` is that whole surface — play/pause, scrubber, replay,
-opt-in loop, a 0.1x-10x speed select and a frame label — so an animated chart writes exactly
+opt-in loop, a 0.1x-10x speed select and a timestamp stamp — so an animated chart writes exactly
 one function:
 
 ```js
@@ -140,6 +143,9 @@ K.transport(el, NQ, draw, { label: function (f) { return Q[f]; }, step: 560 });
 
 It lands on the final frame so the first thing seen is meaningful, kills every tween under
 `prefers-reduced-motion`, and re-arms a mid-play speed change without losing the current frame.
+The current position must be unmissable at every frame: `opts.label` renders as a stamp pill
+pinned beside the scrubber, and the scrubber's track fills to the current frame — both come
+free from the kit, so never add a second frame caption inside the chart.
 Inside `draw`, tween durations go through `K.tdur(el, base, step)` — clamped to the frame
 interval before the speed factor, so a tween can never outlive its frame at any speed — and any
 hand-rolled delay divides by `K.spd(el)`. A chart with its own controls but no frames still

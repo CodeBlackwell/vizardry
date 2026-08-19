@@ -188,6 +188,24 @@ dl.fields dt:last-of-type,dl.fields dd:last-of-type{border-bottom:0}
 .ctrl select{font:inherit;background:var(--surface);color:var(--ink-2);border:1px solid var(--line);
   padding:3px 6px;border-radius:4px}
 .ctrl .lbl{color:var(--ink-3);align-self:center}
+/* playback timestamp: a pill pinned beside the scrubber, sized so it can't be missed;
+   tabular figures stop it jittering as frames tick past */
+.ctrl .stamp{align-self:center;font-size:13px;font-weight:700;letter-spacing:.04em;
+  font-variant-numeric:tabular-nums;color:var(--accent);background:var(--surface);
+  border:1px solid var(--accent-2);border-radius:4px;padding:2px 9px;min-width:7ch;text-align:center}
+/* the scrubber track fills to --p (set by the transport) so timeline position is
+   readable at a glance, not only from the thumb */
+.ctrl input[type=range]{-webkit-appearance:none;appearance:none;align-self:center;height:20px;
+  margin:0;background:transparent;cursor:pointer}
+.ctrl input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent-2) var(--p,100%),var(--line) 0)}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  margin-top:-4px;border-radius:50%;background:var(--accent-2);border:2px solid var(--surface);
+  box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.ctrl input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+.ctrl input[type=range]::-moz-range-progress{height:6px;border-radius:3px;background:var(--accent-2)}
+.ctrl input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;
+  background:var(--accent-2);border:2px solid var(--surface)}
 #tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:99;
   background:var(--ink);color:var(--ground);font-family:var(--mono);font-size:11.5px;line-height:1.5;
   padding:7px 10px;border-radius:5px;max-width:280px;box-shadow:0 4px 14px rgba(0,0,0,.28)}

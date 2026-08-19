@@ -111,15 +111,16 @@ window.VZ = (function () {
     var play = bar.append('button').attr('type', 'button').text('▶ play');
     var slider = bar.append('input').attr('type', 'range')
       .attr('min', 0).attr('max', n - 1).style('width', '210px');
+    // the stamp sits against the scrubber so timestamp and timeline position read as one unit
+    var lab = opts.label ? bar.append('span').attr('class', 'stamp') : null;
     var replay = bar.append('button').attr('type', 'button').text('replay');
     var loopBtn = bar.append('button').attr('type', 'button').text('loop').attr('aria-pressed', 'false');
     speedCtrl(bar, el, function () {
       if (timer) { clearInterval(timer); timer = setInterval(tick, (opts.step || 560) / spd(el)); }
     });
-    var lab = opts.label ? bar.append('span').attr('class', 'lbl') : null;
     function setF(nf, animate, entrance) {
       f = nf;
-      slider.property('value', f);
+      slider.property('value', f).style('--p', (n > 1 ? 100 * f / (n - 1) : 100) + '%');
       if (lab) lab.text(opts.label(f));
       draw(f, animate && !RM, entrance && !RM);
     }

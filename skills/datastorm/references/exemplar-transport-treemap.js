@@ -12,6 +12,8 @@
  *   - Labels on saturated fills: bold ink chosen per cell at the L* ~51 crossover, computed
  *     once from the frozen fill, and set as inline style — the shell's svg text rule
  *     outranks a fill presentation attribute and would silently eat it.
+ *   - Numerate labels: each cell wide enough carries its share of the frame total beside the
+ *     name (bold name, lighter share), re-set every frame and dropped before it overflows.
  */
 var K = window.VZ, P = K.P;
 var R = {};
@@ -68,11 +70,17 @@ R.treemap = function (el) {
     var lb = labG.selectAll('text').data(fits, function (d) { return d.data.k; });
     // inline style, not attr: the page's `svg text{fill:var(--ink-2)}` rule outranks a
     // presentation attribute and would silently gray these out
-    lb = lb.enter().append('text').style('font-size', '10px').style('font-weight', '700')
+    var lbe = lb.enter().append('text').style('font-size', '10px')
       .style('fill', function (d) { return K.fgOn(fill[d.data.k]); })
-      .attr('x', function (d) { return d.x0 + 4; }).attr('y', function (d) { return d.y0 + 13; })
-      .text(function (d) { return d.data.k; })
-      .merge(lb);
+      .attr('x', function (d) { return d.x0 + 4; }).attr('y', function (d) { return d.y0 + 13; });
+    lbe.append('tspan').style('font-weight', '700').text(function (d) { return d.data.k; });
+    lbe.append('tspan').attr('class', 'pc').attr('dx', 4).style('fill-opacity', 0.75);
+    lb = lbe.merge(lb);
+    // per-cell share of the frame total; re-set every frame, dropped when it no longer fits
+    lb.select('tspan.pc').text(function (d) {
+      var p = total ? (d.value / total * 100).toFixed(1) + '%' : '';
+      return d.x1 - d.x0 > 6.9 * d.data.k.length + 6.2 * p.length + 14 ? p : '';
+    });
     lb.transition(t)
       .attr('x', function (d) { return d.x0 + 4; }).attr('y', function (d) { return d.y0 + 13; });
     labG.selectAll('text').data(fits, function (d) { return d.data.k; }).exit().remove();
