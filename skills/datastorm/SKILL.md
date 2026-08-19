@@ -137,7 +137,7 @@ Aim for **12 to 20 total**, distributed roughly:
 
 ### 5. Find the exemplars
 
-The `d3-react-charts` skill ships 181 self-contained charts with a retrieval index. Use it:
+The `d3-react-charts` skill ships 197 self-contained charts with a retrieval index. Use it:
 
 ```bash
 node ../d3-react-charts/bin/retrieve.mjs "rank changes between seasons" --top 5 --why

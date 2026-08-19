@@ -27,7 +27,7 @@ well and React does not. A single global choice mismatches one side or the other
 escape triggers are drawn exactly around the cases where D3 owns real stateful behaviour or
 mutates a `d` attribute over time.
 
-Observed distribution after converting the corpus: **161 JSX, 20 ref** across 181 charts.
+Observed distribution across the full corpus: **178 JSX, 19 ref** across 197 charts.
 
 ## Why the escape list is closed
 

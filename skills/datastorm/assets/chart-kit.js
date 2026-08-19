@@ -77,6 +77,87 @@ window.VZ = (function () {
 
   function ctrl(el) { return d3.select(el).append('div').attr('class', 'ctrl'); }
 
+  var RM = typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Per-chart playback speed. speedCtrl adds the select to a chart's bar; spd reads the
+     factor everywhere a duration or delay is computed. tdur clamps a tween to the step
+     interval before scaling, so a tween can never outlive its frame at any speed. */
+  function spd(el) { return el.__spd || 1; }
+  function tdur(el, base, step) { return Math.min(base, step || base) / spd(el); }
+  function speedCtrl(bar, el, onchange) {
+    bar.append('span').attr('class', 'lbl').text('speed');
+    var sel = bar.append('select').attr('aria-label', 'playback speed');
+    [0.1, 0.25, 0.5, 1, 2, 5, 10].forEach(function (v) {
+      sel.append('option').attr('value', v).property('selected', v === 1).text(v + 'x');
+    });
+    el.__spd = 1;
+    sel.on('change', function () { el.__spd = +this.value; if (onchange) onchange(); });
+  }
+
+  /**
+   * Shared playback transport: play/pause toggle, scrubber, replay, opt-in loop toggle,
+   * speed select. draw(frame, animate, entrance) renders one frame of n; opts.label(frame)
+   * captions it; opts.step is the frame interval (default 560ms); opts.entranceMs composes
+   * an entrance with playback — replay runs it at frame 0, then playback waits for it.
+   * Nothing here can run unpausable or loop without the loop toggle being pressed, and
+   * prefers-reduced-motion kills every tween. Lands at the final frame so the first thing
+   * seen is meaningful. Changing speed mid-play re-arms the interval at the new period
+   * without losing the current frame.
+   */
+  function transport(el, n, draw, opts) {
+    opts = opts || {};
+    var bar = ctrl(el), f = n - 1, timer = null, loop = false, entT = null;
+    var play = bar.append('button').attr('type', 'button').text('▶ play');
+    var slider = bar.append('input').attr('type', 'range')
+      .attr('min', 0).attr('max', n - 1).style('width', '210px');
+    var replay = bar.append('button').attr('type', 'button').text('replay');
+    var loopBtn = bar.append('button').attr('type', 'button').text('loop').attr('aria-pressed', 'false');
+    speedCtrl(bar, el, function () {
+      if (timer) { clearInterval(timer); timer = setInterval(tick, (opts.step || 560) / spd(el)); }
+    });
+    var lab = opts.label ? bar.append('span').attr('class', 'lbl') : null;
+    function setF(nf, animate, entrance) {
+      f = nf;
+      slider.property('value', f);
+      if (lab) lab.text(opts.label(f));
+      draw(f, animate && !RM, entrance && !RM);
+    }
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; play.text('▶ play'); }
+      if (entT) { clearTimeout(entT); entT = null; }
+    }
+    function tick() {
+      if (f >= n - 1) { if (loop) setF(0, false); else stop(); return; }
+      setF(f + 1, true);
+    }
+    function start() {
+      if (timer) return;
+      play.text('‖ pause');
+      timer = setInterval(tick, (opts.step || 560) / spd(el));
+    }
+    play.on('click', function () {
+      if (timer) return stop();
+      if (f >= n - 1) setF(0, false);
+      start();
+    });
+    replay.on('click', function () {
+      stop();
+      if (opts.entranceMs && !RM) { // entrance replays at frame 0, playback waits for it
+        setF(0, false, true);
+        entT = setTimeout(function () { entT = null; start(); }, opts.entranceMs / spd(el));
+      } else { setF(0, false); start(); }
+    });
+    loopBtn.on('click', function () {
+      loop = !loop;
+      loopBtn.attr('aria-pressed', String(loop));
+    });
+    slider.on('input', function () { stop(); setF(+this.value, false); });
+    bar.lower(); // the bar sits above the chart regardless of construction order
+    setF(n - 1, false, !!opts.entranceMs);
+    return { set: setF, stop: stop };
+  }
+
   // items: [{key, label}]. Returns {set} so a chart can drive the pressed state from elsewhere.
   function btns(bar, label, items, cur, cb) {
     if (label) bar.append('span').attr('class', 'lbl').text(label);
@@ -176,6 +257,7 @@ window.VZ = (function () {
     frame: frame, canvas: canvas,
     show: show, hide: hide, hov: hov,
     ctrl: ctrl, btns: btns, legend: legend, rampKey: rampKey,
+    RM: RM, spd: spd, tdur: tdur, speedCtrl: speedCtrl, transport: transport,
     axisBottom: axisBottom, axisLeft: axisLeft, grid: grid,
     boot: boot
   };

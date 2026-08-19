@@ -1,7 +1,7 @@
 # Verifying a generated chart
 
 What to assert, cheapest check first, and the specific failure each one catches. This is the
-contract the gallery's own harness enforces over all 181 charts.
+contract the gallery's own harness enforces over all 197 charts.
 
 ## 1. Source rules (regex, free)
 

@@ -111,7 +111,7 @@ For anything that animates a *procedure* rather than a value — a sort, a trave
 ## Further reading
 
 - `references/using-this-skill.md` — **read this before writing a chart.** How to pick two or
-  three exemplars from the 181-chart corpus, and how to verify what you wrote.
+  three exemplars from the 197-chart corpus, and how to verify what you wrote.
 - `references/rationale.md` — why hybrid rather than all-JSX or all-ref, and the measured
   corpus composition behind the routing split.
 - `references/verification.md` — what to assert about a generated chart, and the failure

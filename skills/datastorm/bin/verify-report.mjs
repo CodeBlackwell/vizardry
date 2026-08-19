@@ -184,6 +184,70 @@ check('mojibake', mojibake === 0, [
     'rebuild with build.mjs rather than assembling by hand'
 ]);
 
+// ---------------------------------------------------------------- tooltip contrast
+
+// The tooltip pill inverts (--ink background, --ground text), so a hardcoded color in it
+// disappears in one theme. The colors are pure CSS, so they resolve statically: read each
+// theme's token block, resolve the #tip rules against it, and gate WCAG contrast in both.
+const cssTokens = (block) => {
+  const map = {};
+  for (const [, k, v] of (block ?? '').matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)) map[k] = v.trim();
+  return map;
+};
+const themes = {
+  light: cssTokens(/:root\s*\{([^}]*)\}/.exec(raw)?.[1]),
+  dark: cssTokens(/:root\[data-theme="dark"\]\s*\{([^}]*)\}/.exec(raw)?.[1])
+};
+const decl = (block, prop) =>
+  new RegExp(`(?:^|[;{])\\s*${prop}\\s*:\\s*([^;}]+)`).exec(block ?? '')?.[1]?.trim();
+const tipRule = /#tip\s*\{([^}]*)\}/.exec(raw)?.[1];
+const tipTitleRule = /#tip b\s*\{([^}]*)\}/.exec(raw)?.[1];
+const resolveVar = (v, tokens) => {
+  const m = /^var\(--([\w-]+)\)$/.exec(v ?? '');
+  return m ? tokens[m[1]] : v;
+};
+const luminance = (hex) => {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex ?? '');
+  if (!m) return null;
+  const h = m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1];
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const c = parseInt(h.slice(i, i + 2), 16) / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a, b) => {
+  const [x, y] = [luminance(a), luminance(b)];
+  return x === null || y === null ? null : (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+};
+
+{
+  const tipProblems = [];
+  let unresolved = false;
+  for (const [theme, tokens] of Object.entries(themes)) {
+    const bg = resolveVar(decl(tipRule, 'background'), tokens);
+    const pairs = [
+      ['body text', resolveVar(decl(tipRule, 'color'), tokens)],
+      ['title (#tip b)', resolveVar(decl(tipTitleRule, 'color'), tokens)]
+    ];
+    for (const [what, fg] of pairs) {
+      const ratio = contrast(fg, bg);
+      if (ratio === null) unresolved = true;
+      else if (ratio < 4.5) tipProblems.push(`  ${theme}: ${what} ${fg} on pill ${bg} = ${ratio.toFixed(2)}:1`);
+    }
+  }
+  if (unresolved) {
+    warnings.push('tooltip colors could not be statically resolved — tip-contrast not checked');
+  } else {
+    check('tip-contrast', tipProblems.length === 0, [
+      ...tipProblems,
+      'the tooltip pill inverts with the theme, so a hardcoded color in #tip or #tip b ' +
+        'disappears in one of them — use inverted tokens (the shell uses var(--surface-3) ' +
+        'for the title) and keep both themes at 4.5:1 or better'
+    ]);
+  }
+}
+
 // ---------------------------------------------------------------- numbers (warnings only)
 
 if (booted && dom.window.CD) {

@@ -10,7 +10,7 @@ actually works.
 |---|---|
 | **`/datastorm`** | Profiles a dataset — one you name, or one it finds and reads — and writes a self-contained HTML report: 12 to 20 options from conventional through creative, each with its encoding, color scale, interaction, failure mode, an exemplar to build it from, and **the chart itself, drawn live from the real data**. |
 | **The dialect** | React owns rendering, D3 owns math. The routing rule, its five escape triggers, the component contract, and the React 18 hazards that do not exist in vanilla D3. Always in context. |
-| **181 exemplars** | Every one a single self-contained `.tsx` file that renders on its own, takes its dataset as a prop, and embeds its own demo data. No network, no fetch. |
+| **197 exemplars** | Every one a single self-contained `.tsx` file that renders on its own, takes its dataset as a prop, and embeds its own demo data. No network, no fetch. |
 | **Two verifiers** | For charts: source rules, `tsc`, and a real jsdom render over any `.tsx` in any repo. For reports: the page's own scripts run in jsdom and the whole page contract is gated — every chart drew, all nine fields per option, exemplar ids, mojibake. |
 
 The two skills compose: `/datastorm` decides what to draw and names the exemplar, the chart

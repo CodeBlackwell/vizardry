@@ -211,6 +211,32 @@ function generateWilsons(): Generated {
   return { cells, steps };
 }
 
+function generateKruskals(): Generated {
+  const random = seededRandom(SEED);
+  const cells = emptyGrid();
+  const steps: GenStep[] = [];
+  const parent = Array.from({ length: CELLS }, (_, i) => i);
+  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+
+  const edges: { a: number; b: number; weight: number }[] = [];
+  for (let i = 0; i < CELLS; ++i) {
+    if (legal(i, E)) edges.push({ a: i, b: neighbor(i, E), weight: random() });
+    if (legal(i, S)) edges.push({ a: i, b: neighbor(i, S), weight: random() });
+  }
+  edges.sort((p, q) => p.weight - q.weight);
+
+  for (const { a, b } of edges) {
+    const rootA = find(a);
+    const rootB = find(b);
+    if (rootA === rootB) continue;
+    parent[rootA] = rootB;
+    carve(cells, a, b);
+    steps.push({ carve: [[a, b]], active: [a, b] });
+  }
+
+  return { cells, steps };
+}
+
 interface Flood {
   /** Each cell's predecessor on the path back to the origin; the origin is its own. */
   parent: number[];

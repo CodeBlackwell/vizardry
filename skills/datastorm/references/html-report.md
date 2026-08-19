@@ -114,13 +114,56 @@ Working inside that harness:
   redraws on a theme change, which is what makes one chart file serve light and dark.
 - **`P.seq(t)` for magnitude, `P.div(t)` for polarity** with `t` in [-1, 1] and a neutral middle.
 - **Text on a saturated fill uses `K.fgOn(fill)`**, not a fixed threshold — the middle steps of
-  every ramp are where a fixed threshold gets it wrong.
+  every ramp are where a fixed threshold gets it wrong. Set that ink as an inline `style`,
+  never a `fill` attribute: the shell's `svg text{fill:var(--ink-2)}` rule outranks a
+  presentation attribute and silently eats it. Make the label bold so it survives the fill,
+  and budget the fit for the weight — bold glyphs run ~6.9 px/char, not 6.4.
 - **Fixed widths, not a resize observer.** The charts are documents, not a responsive app. Give
   each one a width in the 640-880 range; the `.chart` wrapper scrolls if it overflows.
 - **Canvas past a few thousand marks** — a SPLOM, parallel coordinates, a Voronoi field. SVG for
   everything else, so hover targets stay free.
 - **Every example gets a tooltip.** It is the interaction that costs nothing and answers "what
   exactly is this mark".
+
+## Animation and choreography
+
+The animation policy is absolute: **nothing autoplays and nothing loops uninvited.** Every
+animated example is pausable, scrubbable and replayable, and looping is a toggle the reader
+presses. `K.transport(el, n, draw, opts)` is that whole surface — play/pause, scrubber, replay,
+opt-in loop, a 0.1x-10x speed select and a frame label — so an animated chart writes exactly
+one function:
+
+```js
+function draw(f, animate, entrance) { /* render frame f; tween when animate is true */ }
+K.transport(el, NQ, draw, { label: function (f) { return Q[f]; }, step: 560 });
+```
+
+It lands on the final frame so the first thing seen is meaningful, kills every tween under
+`prefers-reduced-motion`, and re-arms a mid-play speed change without losing the current frame.
+Inside `draw`, tween durations go through `K.tdur(el, base, step)` — clamped to the frame
+interval before the speed factor, so a tween can never outlive its frame at any speed — and any
+hand-rolled delay divides by `K.spd(el)`. A chart with its own controls but no frames still
+takes the speed select via `K.speedCtrl(bar, el)`.
+
+What the frames themselves have to hold to:
+
+- **Fix the frame of reference.** Scales fixed at the all-frame max, the cell set fixed and
+  colors frozen across every frame — otherwise frames are not comparable and object constancy
+  is lost. The same discipline applies to toggles: build rows and cells ONCE and tween positions
+  on reorder or re-baseline, never rebuild, or the reader's eye loses its place.
+- **Entrances are interruption-safe.** Tween with `attrTween` over geometry cached on the
+  element, writing the interpolated value back each tick, so an interrupted animation hands its
+  true on-screen geometry to the next one instead of snapping.
+- **Entrance grammar follows the family.** A chord: arcs sweep angularly from zero width,
+  staggered by group, then ribbons unfurl from a sliver at the source midpoint across to the
+  target. A multi-line: draw-on staggered by a meaningful order — fastest final growth first —
+  not by index. Compose an entrance with playback through `opts.entranceMs`: replay runs it at
+  frame 0 and playback waits for it.
+
+Two worked files beside this document show these patterns whole, calling the kit rather than
+re-implementing it: `exemplar-chord-entrance.js` (the interruption-safe chord entrance on a
+transport) and `exemplar-transport-treemap.js` (a transported treemap with frozen colors and
+per-cell label ink).
 
 ## Rules the page has to hold to
 
@@ -134,6 +177,14 @@ Working inside that harness:
   claims, and only one of them is what happened.
 - **Draw the no-data state.** Empty cells, unmapped regions and structural zeros get their own
   visible fill, never the lightest step of the ramp.
+- **A chord occludes past ~12-15 groups.** Ribbons bury each other and the chart stops being
+  readable; crop to the top N and say so in the caption.
+- **When color means two things, say so in one caption line.** Hue for one relation and gray
+  for the other is a fine dual encoding only if the caption states the rule and the gray leg
+  stays visible rather than fading to nothing.
+- **Baselines are a claim; give the reader the other one.** A diverging chart whose baseline is
+  arguable gets a baseline toggle; an indexed chart gets an absolute toggle. Keep the sort
+  order invariant under the toggle, which is what lets the marks build once and tween values.
 - **Numerals in mono, with tabular figures.** Digits in a column that do not line up undo the
   impression that anything here was measured.
 - **Wide things scroll inside their own box.** Tables live in a `.tw` wrapper, charts in a
