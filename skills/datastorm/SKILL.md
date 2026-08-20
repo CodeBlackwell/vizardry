@@ -17,6 +17,9 @@ The worked examples are what keep the second half honest. An option that is only
 claim anything; an option that is drawn either works or visibly does not, and the difference
 shows up in its own failure-mode field.
 
+When the example build itself is the bottleneck, `/datastorm-parallel` runs this same
+procedure with the worked examples built by concurrent agents, one per option.
+
 ## The procedure
 
 ### 1. Get the data shape
@@ -183,6 +186,9 @@ It runs the page's own scripts and fails on any chart that did not draw, any car
 of the nine fields, a missing section, a rail that skips an option, an exemplar id the corpus
 does not have, or mojibake. A FAIL is a build stop — fix and rebuild until it exits green; the
 human walk in `references/html-report.md` covers only what jsdom cannot see (layout).
+
+While iterating one example, `node <skill>/bin/verify-option.mjs charts.js` gives the same
+execution feedback per chart without rebuilding the page.
 
 ## Output
 
