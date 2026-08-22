@@ -6,6 +6,17 @@
  * report, and every failure carries the repair as an instruction.
  *
  *   node verify-option.mjs <option.js> [more.js ...] [--data chartdata.json] [--page page.html]
+ *                          [--keys a,b,c] [--strict] [--emit evidence.json]
+ *
+ * `--keys` are the option spec's declared dataKeys; without them the two adherence checks do
+ * not run, which is what keeps the serial /datastorm path unchanged. `--strict` turns the
+ * tooltip warning into a failure, which an option card wants and a profile-section chart does
+ * not. `--emit` writes what was actually drawn — keys read, mark count, axis labels, tooltip
+ * sample — so a reviewing agent judges the result rather than the source.
+ *
+ * Scope note: `no-raw-timers` and `hand-rolled-transport` read the whole file, so a bare
+ * fragment and a complete charts.js can disagree — a timer in a top-level helper fails the
+ * file even though no individual fragment contains one. The fragment is the unit that matters.
  *
  * A fragment is one or more `R.<id> = function (el) {…}` assignments in the charts.js
  * dialect. A complete charts.js (header and `K.boot(R)` included) also verifies, so the
@@ -20,7 +31,7 @@
  * kit through a getComputedStyle shim. Without it every P.* color is '' and a NaN check
  * would gate on the harness rather than the chart.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM, VirtualConsole } from 'jsdom';
@@ -32,12 +43,25 @@ const flag = (name) => {
   const i = args.indexOf(name);
   return i === -1 ? null : args.splice(i, 2)[1];
 };
+const bool = (name) => {
+  const i = args.indexOf(name);
+  if (i === -1) return false;
+  args.splice(i, 1);
+  return true;
+};
 const dataFlag = flag('--data');
 const pageFlag = flag('--page');
+// Declared dataKeys. Absent = the adherence checks do not run, which is what keeps the
+// serial /datastorm path byte-identical to before they existed.
+const declaredKeys = (flag('--keys') ?? '').split(',').map((k) => k.trim()).filter(Boolean);
+const emitPath = flag('--emit');
+// The parallel builder passes --strict for an option card; a profile-section chart does not.
+const strict = bool('--strict');
 const files = args;
 
 if (files.length === 0 || files.some((f) => !existsSync(f))) {
-  console.error('usage: verify-option.mjs <option.js> [more.js ...] [--data chartdata.json] [--page page.html]');
+  console.error('usage: verify-option.mjs <option.js> [more.js ...] [--data chartdata.json] ' +
+    '[--page page.html] [--keys a,b,c] [--strict] [--emit evidence.json]');
   process.exit(1);
 }
 
@@ -112,7 +136,21 @@ ${keys.map((k) => `<figure><div class="chart" data-chart="${k}"></div></figure>`
 <script>${d3Source}</script>
 <script>${topo}</script>
 <script>window.ATLAS=${atlas};</script>
-<script>window.CD=${dataSource};</script>
+<script>
+// Data adherence is measured, not asserted: a get trap records which top-level aggregates the
+// fragment actually read, so a declared dataKey it ignored and an aggregate it invented are
+// both visible afterwards. A get-only trap is transparent to everything else.
+(function () {
+  var RAW = ${dataSource};
+  window.__reads = [];
+  window.CD = new Proxy(RAW, {
+    get: function (t, k) {
+      if (typeof k === 'string' && window.__reads.indexOf(k) === -1) window.__reads.push(k);
+      return t[k];
+    }
+  });
+})();
+</script>
 <script>${kitSource}</script>
 <script>
 var K = window.VZ, P = K.P, D = window.CD;
@@ -124,6 +162,7 @@ ${fragment}
 }
 
 let failed = false;
+const evidenceOut = [];
 
 for (const file of files) {
   const source = readFileSync(file, 'utf8');
@@ -132,6 +171,9 @@ for (const file of files) {
   const checks = [];
   const warnings = [];
   const check = (name, ok, detail) => checks.push({ name, ok, detail: ok ? [] : detail });
+  // What was actually drawn, for --emit. A reviewing agent judges these facts; it never
+  // re-derives them from the fragment's source.
+  const evidence = { file, keys };
 
   check('render-fn', keys.length > 0, [
     'no `R.<id> = function (el) {…}` assignment found — a fragment is one or more render ' +
@@ -150,6 +192,15 @@ for (const file of files) {
         // jsdom has no 2D context; the proxy absorbs the API so canvas charts complete.
         const ctx = new Proxy(function () {}, { get: () => ctx, set: () => true, apply: () => ctx });
         window.HTMLCanvasElement.prototype.getContext = () => ctx;
+        // jsdom has no matchMedia either, and chart-kit's boot() calls it unguarded (the RM
+        // read at the top of the kit IS guarded, which is why the kit still loads). Without
+        // this shim boot throws after renderAll, the theme-redraw observer never registers,
+        // and every run carries a swallowed error that pollutes real failure detail.
+        window.matchMedia = (q) => ({
+          matches: false, media: q, onchange: null,
+          addEventListener() {}, removeEventListener() {},
+          addListener() {}, removeListener() {}, dispatchEvent: () => false
+        });
       }
     });
 
@@ -168,13 +219,106 @@ for (const file of files) {
     ]);
 
     const markup = nodes.map((n) => n.innerHTML).join('');
+    evidence.marks = nodes.reduce((n, el) => n + el.querySelectorAll(`svg :is(${MARKS})`).length, 0);
+    evidence.axisLabels = [...new Set([...markup.matchAll(/<text[^>]*>([^<]+)<\/text>/g)]
+      .map((m) => m[1].trim()).filter(Boolean))].slice(0, 40);
     check('no-nan', !/NaN|Infinity/.test(markup) && !/="undefined"/.test(markup), [
       'a NaN, Infinity or undefined reached an attribute and the browser silently drops that ' +
         'mark — check the domain against the real chartdata.json and floor any derived dimension'
     ]);
+
+    const win = dom.window;
+
+    // --- tooltip, executed rather than grepped -------------------------------------------
+    // `K.hov` binds pointerenter/pointermove and `show` sets exactly innerHTML + opacity, so
+    // firing a real event is the only way to tell a bound tooltip from one wired to an empty
+    // selection. jsdom has no PointerEvent; MouseEvent carries the same clientX/clientY.
+    const tip = win.document.getElementById('tip');
+    const Pointer = win.PointerEvent || win.MouseEvent;
+    let tipFired = false;
+    outer: for (const n of nodes) {
+      // Not just the first mark: grid lines and axis paths are drawn before the data marks
+      // and carry no handler, so scanning is what tells "no tooltip" from "tooltip on the
+      // bars". Bounded so a 5,000-mark scatter does not walk the whole selection.
+      const marks = [...n.querySelectorAll(`svg :is(${MARKS})`)].slice(0, 60);
+      if (n.querySelector('canvas')) marks.push(n.querySelector('canvas'));
+      for (const mark of marks) {
+        for (const type of ['pointerenter', 'pointermove']) {
+          try {
+            mark.dispatchEvent(new Pointer(type, { bubbles: true, cancelable: true, clientX: 40, clientY: 40 }));
+          } catch { /* a mark with no pointer surface simply never fires */ }
+        }
+        if (tip && tip.style.opacity === '1' && tip.innerHTML.trim()) { tipFired = true; break outer; }
+      }
+    }
+    evidence.tooltip = tipFired ? tip.innerHTML.slice(0, 200) : null;
+    const tipDetail = [
+      'no tooltip fired: a pointermove over every data mark left #tip empty. Bind it with ' +
+        'K.hov(sel, fn) on the selection that carries the data (or K.show from a canvas ' +
+        'pointermove) — a K.hov on an empty selection looks right in source and does nothing'
+    ];
+    if (strict) check('tooltip-fires', tipFired, tipDetail);
+    else if (!tipFired) warnings.push(tipDetail[0] + '; only a profile-section chart may skip it');
+
+    // --- data adherence ------------------------------------------------------------------
+    // `meta` is always allowed: computing a legend label from D.meta.* is the no-hardcoded-
+    // findings rule done right, and specs do not list it as a dataKey.
+    const read = (win.__reads || []).filter((k) => k !== 'meta');
+    evidence.keysRead = read;
+    if (declaredKeys.length) {
+      const missing = declaredKeys.filter((k) => !read.includes(k));
+      const extra = read.filter((k) => !declaredKeys.includes(k));
+      check('keys-declared', missing.length === 0, [
+        `declared but never read: ${missing.join(', ')}`,
+        'the spec names the aggregates this example draws from — draw from them, or say in ' +
+          'the card that the spec changed'
+      ]);
+      check('keys-only', extra.length === 0, [
+        `read but not declared: ${extra.join(', ')}`,
+        'every number drawn traces to a dataKey the spec named. Add the aggregate to prep.py ' +
+          'and re-declare it rather than reaching for a neighbouring key'
+      ]);
+    }
+
+    // --- palette membership, checked against the kit's own live P ------------------------
+    // Derived from the running kit, not restated here, so the two cannot drift.
+    const members = win.VZ && win.VZ.P ? new Set(Object.keys(win.VZ.P)) : null;
+    if (members) {
+      const used = [...new Set([...code.matchAll(/\bP\.([A-Za-z_$][\w$]*)/g)].map((m) => m[1]))];
+      const unknown = used.filter((k) => !members.has(k));
+      // d3's built-in categorical schemes are the other way a color escapes the palette. Only
+      // scheme* — d3.interpolate* legitimately blends two P colors and drives tweens.
+      const schemes = [...new Set([...code.matchAll(/\bd3\.(scheme[A-Za-z0-9]*)/g)].map((m) => m[1]))];
+      check('palette-members', unknown.length === 0 && schemes.length === 0, [
+        ...(unknown.length ? [`not a palette member: ${unknown.map((k) => 'P.' + k).join(', ')}`] : []),
+        ...(schemes.length ? [`a d3 built-in scheme bypasses the palette: ${schemes.map((s) => 'd3.' + s).join(', ')}`] : []),
+        `P carries exactly: ${[...members].sort().join(', ')} — anything else is undefined at ` +
+          'runtime and silently drops the color, and a built-in scheme is fixed ink that never ' +
+          'flips with the theme'
+      ]);
+    }
+
+    // --- legend, structural rather than textual ------------------------------------------
+    // A source grep for K.legend( misses a file-local wrapper that calls the kit, and misses
+    // a hand-rolled legend entirely. The rendered node catches all three the same way.
+    const hasLegend = nodes.some((n) => n.querySelector('.legend'));
+    evidence.legend = hasLegend;
+    // Axis ticks are <text> too, so "it has labels" cannot be the escape hatch — the trigger
+    // is a categorical color scale specifically, which is the case a reader cannot decode
+    // without a key.
+    const ordinal = /scaleOrdinal|d3\.schemeCategory|\bcolou?rBy\b/.test(code);
+    if (ordinal && !hasLegend) {
+      warnings.push(
+        'color appears to encode a category but no .legend node rendered and no direct labels ' +
+          'were drawn — K.legend(el, [{c, t}]) for classes, K.rampKey(el, lo, hi, fn) for a ramp'
+      );
+    }
   }
 
-  check('no-hex', !/#[0-9a-fA-F]{3,8}\b/.test(code), [
+  // `&#8594;` (→) and friends are HTML character references in tooltip strings, not colors.
+  // Strip them first or every arrow in a tooltip reads as a hardcoded hex.
+  const noEntities = code.replace(/&#\d+;/g, '');
+  check('no-hex', !/#[0-9a-fA-F]{3,8}\b/.test(noEntities), [
     'a hardcoded hex color never survives the theme flip — colors come from P (P.acc, ' +
       'P.seq(t), P.div(t)), which is filled from the page tokens and redrawn on theme change'
   ]);
@@ -185,12 +329,31 @@ for (const file of files) {
       'scrub, speed and prefers-reduced-motion at once'
   ]);
 
-  if (!/\b(hov|show)\s*\(/.test(code)) {
-    warnings.push(
-      'no tooltip — every option example gets one (K.hov, or K.show from a canvas ' +
-        'pointermove); only a profile-section chart may skip it'
-    );
+  // --- animation policy ------------------------------------------------------------------
+  // Playback is the kit's job. A chart that rolls its own gets no pause, no scrub, no speed
+  // select and no prefers-reduced-motion, and nothing above catches it because it draws fine.
+  const transported = /\bK\.transport\s*\(/.test(code);
+  evidence.transport = transported;
+  check('hand-rolled-transport', !/\bfunction\s+transport\s*\(|\btransport\s*=\s*function\b/.test(code), [
+    'this fragment defines its own transport() — K.transport(el, n, draw, opts) is the whole ' +
+      'playback surface (play/pause, scrubber, replay, opt-in loop, speed select, frame stamp) ' +
+      'and a local copy silently loses every one of them'
+  ]);
+
+  if (transported) {
+    check('transport-opts', /\bstep\s*:/.test(code), [
+      'K.transport was called without opts.step — it falls back to 560ms per frame, and a tween ' +
+        'sized for a slower frame outruns its own frame at any speed above 1x'
+    ]);
+    const tweens = /\.duration\s*\(|\.delay\s*\(/.test(code);
+    check('tween-routing', !tweens || /\bK\.(tdur|spd)\s*\(/.test(code), [
+      'a raw .duration() or .delay() in a transported chart bypasses the speed select and ' +
+        'prefers-reduced-motion at once — route durations through K.tdur(el, base, step) and ' +
+        'divide any hand-rolled delay by K.spd(el)'
+    ]);
   }
+
+  if (emitPath) evidenceOut.push(evidence);
 
   console.log(file);
   for (const c of checks) {
@@ -202,5 +365,7 @@ for (const file of files) {
   for (const w of warnings) console.log(`  WARN  ${w}`);
   console.log('');
 }
+
+if (emitPath) writeFileSync(emitPath, JSON.stringify(evidenceOut, null, 2));
 
 process.exit(failed ? 1 : 0);

@@ -65,6 +65,13 @@ const dom = new JSDOM(raw, {
     // reads as undrawn. The proxy absorbs the whole context API so the chart code completes.
     const ctx = new Proxy(function () {}, { get: () => ctx, set: () => true, apply: () => ctx });
     window.HTMLCanvasElement.prototype.getContext = () => ctx;
+    // chart-kit's boot() calls matchMedia unguarded, and jsdom has none — without this shim
+    // boot throws after renderAll on every run and the theme-redraw observer never registers.
+    window.matchMedia = (q) => ({
+      matches: false, media: q, onchange: null,
+      addEventListener() {}, removeEventListener() {},
+      addListener() {}, removeListener() {}, dispatchEvent: () => false
+    });
   }
 });
 
