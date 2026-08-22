@@ -26,7 +26,7 @@ hierarchical, `R` relational. `N(12)` means a nominal column with 12 distinct va
 |---|---|
 | conventional | multi-line `multi-line`, small multiples `methods-of-comparison`, stacked area if the parts sum to a meaningful whole `stacked-area`, `music-format-revenue` |
 | analytical | normalized stack for share rather than level `normalized-stacked-area`, `us-population-by-state`; index every series to a common start `index-chart`; slope chart for exactly two periods `slope`, a few ordered stages `survival-rates`; heatmap the T x N grid when N is large `electric-usage`, `impact-of-vaccines`, `population-by-age`; ridgeline when the series are distributions `ridgeline`, `psr-b1919-21`; horizon stack when N is large `horizon`; one row per series as a sparkline table |
-| creative | streamgraph with a centred baseline `streamgraph`; animated rank race `bar-chart-race`; overlay the years as one cycle per line `sea-ice-extent`; connected scatterplot when two Qs move together over time `connected-scatterplot`; temporal force layout when membership changes `temporal-force-graph`; the transition itself as the chart `streamgraph-transitions` |
+| creative | streamgraph with a centred baseline `streamgraph`; animated rank race `bar-chart-race`; rank at every period with crossings visible, statically `bump-chart`; overlay the years as one cycle per line `sea-ice-extent`; connected scatterplot when two Qs move together over time `connected-scatterplot`; temporal force layout when membership changes `temporal-force-graph`; the transition itself as the chart `streamgraph-transitions` |
 
 **Watch:** stacking hides individual shape above the first band. Past roughly 8 series a
 categorical palette stops working — see `color-and-motion.md`.
@@ -35,7 +35,7 @@ categorical palette stops working — see `color-and-motion.md`.
 
 | band | families |
 |---|---|
-| conventional | timeline bars on a shared axis `world-history-timeline` |
+| conventional | timeline bars on a shared axis `world-history-timeline`, task schedule grouped by lane `gantt` |
 | analytical | sort by start, then by duration — each ordering answers a different question; overlap count over time as its own chart |
 | creative | time-distance diagram when the rows travel a shared route, so slope is speed `mareys-trains` |
 
@@ -46,7 +46,7 @@ categorical palette stops working — see `color-and-motion.md`.
 | band | families |
 |---|---|
 | conventional | scatterplot `scatterplot`, with shape or color for a third `scatterplot-shapes` |
-| analytical | regression or LOESS overlay; residuals as their own chart; hexbin when overplotted `hexbin`, with cell area as the count `hexbin-area`; density contours `density-contours`; QQ against a reference `qq-plot`; marginal distributions on the axes |
+| analytical | regression or LOESS overlay `regression-overlay`; residuals as their own chart `residuals`; hexbin when overplotted `hexbin`, with cell area as the count `hexbin-area`; density contours `density-contours`; QQ against a reference `qq-plot`; marginal distributions on the axes |
 | creative | Voronoi cells for hover targets and structure `us-airports-voronoi`; beeswarm when one axis is really a category `beeswarm`; phase portrait when both Qs evolve in time `predator-and-prey`; a domain-loaded scatter where the axes carry meaning of their own `hr-diagram` |
 
 **Watch:** past ~2,000 points a scatter is a blob. Bin, contour, or make opacity do work.
@@ -55,8 +55,8 @@ categorical palette stops working — see `color-and-motion.md`.
 
 | band | families |
 |---|---|
-| conventional | bar `bar`, horizontal bar when labels are long `horizontal-bar`, dot plot `dot-plot`, pie `pie` or donut `donut` when the parts sum to a whole and N is small |
-| analytical | sort by value, which is usually the entire insight; diverging around a reference `diverging-bar`; Pareto with a cumulative line; range plot when there are two values per row `inequality-in-cities`; distribution per category instead of a mean `box-plot`, `beeswarm-mirrored`; when N is too large to read, zoom the band axis `zoomable-bar-chart` |
+| conventional | bar `bar`, horizontal bar when labels are long `horizontal-bar`, dot plot `dot-plot`, lollipop when the bars' ink outweighs their message `lollipop`, pie `pie` or donut `donut` when the parts sum to a whole and N is small, waffle when the reader should count units rather than judge angles `waffle` |
+| analytical | sort by value, which is usually the entire insight; diverging around a reference `diverging-bar`; Pareto with a cumulative line; range plot when there are two values per row `inequality-in-cities`; distribution per category instead of a mean `box-plot`, `beeswarm-mirrored`; when N is too large to read, zoom the band axis `zoomable-bar-chart`; against a target with graded context `bullet-chart`; decomposing a change into its parts `waterfall` |
 | creative | treemap when the values are parts of a whole `treemap`; radial bars when the categories are cyclic `radial-stacked-bar`; packed circles `pack`, `bubble-chart`; Marimekko when width is also a measure `marimekko` |
 
 **Watch:** a bar chart of means, when the distributions overlap, is the most common quiet lie in
@@ -77,9 +77,9 @@ them *is* choosing the question — say which one the option answers.
 
 | band | families |
 |---|---|
-| conventional | scatterplot matrix `splom`, correlation heatmap |
+| conventional | scatterplot matrix `splom`, correlation heatmap `correlation-heatmap` |
 | analytical | brushable SPLOM with linked selection `brushable-splom`; parallel coordinates with reorderable axes `parallel-coordinates`; PCA or UMAP into 2D, then color by a held-out column, or animate the projections as a tour `scatterplot-tour`; standardize before comparing |
-| creative | radar per row when the measures are commensurate and few; parallel sets when the Qs are really categorical flows `parallel-sets` |
+| creative | radar per row when the measures are commensurate and few `radar`; parallel sets when the Qs are really categorical flows `parallel-sets` |
 
 **Watch:** parallel coordinates depend entirely on axis order. If the order is not chosen, the
 chart is arbitrary.
@@ -116,7 +116,7 @@ the sun's seasonal path `solar-path`, a lunar calendar `phases-of-the-moon`.
 | band | families |
 |---|---|
 | conventional | node-link force layout `force-directed-graph`, arc diagram `arc-diagram` |
-| analytical | adjacency matrix once the graph is dense — order the rows by cluster and the structure appears; chord for flows between a small fixed set `chord`, labelled `chord-labelled`, directed `directed-chord`, as a dependency wheel `chord-dependency`; edge types kept distinct on a directed graph `mobile-patent-suits`; Sankey when the flow is staged and conserved `sankey`; hierarchical edge bundling when the nodes have a natural grouping `edge-bundling`; degree distribution as its own chart |
+| analytical | adjacency matrix once the graph is dense — order the rows by cluster and the structure appears `adjacency-matrix`; chord for flows between a small fixed set `chord`, labelled `chord-labelled`, directed `directed-chord`, as a dependency wheel `chord-dependency`; edge types kept distinct on a directed graph `mobile-patent-suits`; Sankey when the flow is staged and conserved `sankey`; hierarchical edge bundling when the nodes have a natural grouping `edge-bundling`; degree distribution as its own chart |
 | creative | tangled tree for lineage `tangled-tree`; bilevel bundling `edge-bundling-bilevel`; a force layout that settles on interaction rather than on load `disjoint-force-graph` |
 
 **Watch:** past ~150 nodes a force layout is a hairball that looks like insight. Matrix, or
@@ -127,10 +127,21 @@ aggregate to communities first.
 | band | families |
 |---|---|
 | conventional | histogram `histogram`, box plot `box-plot` |
-| analytical | KDE over the histogram `kde`; QQ against normal `normal-quantile`; ECDF; log scale when spanning orders of magnitude; bin-width sensitivity shown, not chosen silently |
-| creative | beeswarm so every observation stays visible `beeswarm`; ridgeline across a grouping column `ridgeline`; violin when comparing shapes side by side |
+| analytical | KDE over the histogram `kde`; QQ against normal `normal-quantile`; ECDF, which needs no bin decisions at all `ecdf`; log scale when spanning orders of magnitude; bin-width sensitivity shown, not chosen silently |
+| creative | beeswarm so every observation stays visible `beeswarm`; ridgeline across a grouping column `ridgeline`; violin when comparing shapes side by side `violin` |
 
 **Watch:** bin width is a parameter, and a histogram with an unstated one is an assertion.
+
+## A value and its uncertainty
+
+| band | families |
+|---|---|
+| conventional | error bars beside the estimate `error-bars` |
+| analytical | band of uncertainty over time `band`; forecast fan of nested quantile bands `fan-chart`; residuals to show what the model missed `residuals` |
+| creative | spaghetti of raw draws rather than a summary band |
+
+**Watch:** say which interval the chart shows. A 95% quantile band and a standard error of the
+mean differ by an order of magnitude, and readers conflate them constantly.
 
 ## Q on a grid — a measured surface
 

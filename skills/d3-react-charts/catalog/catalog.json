@@ -1,28 +1,28 @@
 {
   "generated_by": "scripts/build-catalog.mjs",
   "purpose": "Retrieval index for the generation skill. Two to three of these are meant to be selected per request as exemplars, matched on category, technique, and route. Regenerate after every conversion wave.",
-  "count": 197,
+  "count": 212,
   "by_category": {
     "Algorithms": 32,
     "Geo": 23,
-    "Basic": 19,
-    "Distribution": 18,
-    "Time Series": 15,
+    "Distribution": 22,
+    "Basic": 20,
+    "Time Series": 18,
+    "Comparison": 16,
     "Hierarchy": 15,
-    "Network": 14,
-    "Comparison": 12,
+    "Network": 15,
     "Animation": 12,
     "Interaction": 11,
     "Encoding": 7,
+    "Multivariate": 5,
     "Radial": 5,
-    "Multivariate": 4,
-    "Heatmap": 3,
+    "Heatmap": 4,
     "Text": 3,
     "Annotation": 2,
     "Astronomy": 2
   },
   "by_route": {
-    "jsx": 178,
+    "jsx": 193,
     "ref": 19
   },
   "charts": [
@@ -8116,6 +8116,590 @@
         "schemeObservable10"
       ],
       "d3_modules": [
+        "d3-scale-chromatic"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": false
+    },
+    {
+      "id": "violin",
+      "title": "Violin Plot",
+      "category": "Distribution",
+      "route": "jsx",
+      "source": "original:gaps/violin",
+      "file": "src/gallery/charts/ViolinPlot.tsx",
+      "lines": 127,
+      "data_shape": "{ group: string; value: number }[]",
+      "when_to_use": "Comparing the full shape of a distribution across groups — bimodality, skew, and spread that a box plot's five numbers hide. The mirrored density makes side-by-side shape comparison the whole chart.",
+      "keywords": [
+        "violin plot",
+        "distribution shape",
+        "bimodal",
+        "kernel density",
+        "compare distributions side by side",
+        "one value column one group column",
+        "spread by category",
+        "box plot alternative",
+        "density mirrored",
+        "latency distribution",
+        "skew",
+        "per-group distribution"
+      ],
+      "d3_apis": [
+        "curveCatmullRom",
+        "deviation",
+        "extent",
+        "max",
+        "mean",
+        "median",
+        "scaleBand",
+        "scaleLinear"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-scale",
+        "d3-shape"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "ecdf",
+      "title": "ECDF",
+      "category": "Distribution",
+      "route": "jsx",
+      "source": "original:gaps/ecdf",
+      "file": "src/gallery/charts/EcdfChart.tsx",
+      "lines": 98,
+      "data_shape": "number[]",
+      "when_to_use": "The distribution of one numeric column with zero binning decisions: every observation, the exact proportion at or below any value, quantiles readable straight off the curve. The honest default when a histogram's bin width would be an argument.",
+      "keywords": [
+        "ecdf",
+        "empirical cumulative distribution",
+        "cumulative distribution function",
+        "cdf",
+        "percentile",
+        "quantile",
+        "proportion below",
+        "one numeric column",
+        "no bins",
+        "step function",
+        "session durations",
+        "long tail",
+        "median readout"
+      ],
+      "d3_apis": [
+        "ascending",
+        "curveStepAfter",
+        "format",
+        "max",
+        "quantileSorted",
+        "scaleLinear"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-format",
+        "d3-scale",
+        "d3-shape"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "lollipop",
+      "title": "Lollipop Chart",
+      "category": "Comparison",
+      "route": "jsx",
+      "source": "original:gaps/lollipop",
+      "file": "src/gallery/charts/LollipopChart.tsx",
+      "lines": 87,
+      "data_shape": "{ name: string; value: number }[]",
+      "when_to_use": "A bar chart with the ink taken out: one value per category as a stem and a dot, sorted by value. Reads cleaner than bars past a dozen rows and when values cluster far from zero.",
+      "keywords": [
+        "lollipop chart",
+        "lollipop",
+        "stem and dot",
+        "one value per category",
+        "ranking",
+        "sorted by value",
+        "bar chart alternative",
+        "long category labels",
+        "horizontal layout",
+        "cleveland dot plot",
+        "share by country",
+        "minimal ink"
+      ],
+      "d3_apis": [
+        "format",
+        "max"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-format"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "waffle",
+      "title": "Waffle Chart",
+      "category": "Basic",
+      "route": "jsx",
+      "source": "original:gaps/waffle",
+      "file": "src/gallery/charts/WaffleChart.tsx",
+      "lines": 100,
+      "data_shape": "{ name: string; value: number }[]",
+      "when_to_use": "Parts of a whole as counted units: 100 cells, one per percent, allocated by largest remainder so they always sum exactly. Beats a pie when the reader should count rather than judge angles, and makes small shares visibly small instead of invisibly thin.",
+      "keywords": [
+        "waffle chart",
+        "unit chart",
+        "isotype",
+        "pictogram grid",
+        "parts of a whole",
+        "percentage grid",
+        "one cell per percent",
+        "share of total",
+        "pie chart alternative",
+        "square pie",
+        "energy mix",
+        "composition"
+      ],
+      "d3_apis": [
+        "format",
+        "schemeObservable10",
+        "sum"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-format",
+        "d3-scale-chromatic"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": false
+    },
+    {
+      "id": "regression-overlay",
+      "title": "Regression Overlay",
+      "category": "Distribution",
+      "route": "jsx",
+      "source": "original:gaps/regression-overlay",
+      "file": "src/gallery/charts/RegressionOverlay.tsx",
+      "lines": 109,
+      "data_shape": "{ x: number; y: number }[]",
+      "when_to_use": "A scatter with both a least-squares line and a LOESS curve on top, so the reader sees the linear summary and where the data refuses it in one frame. Reach for it when the question is whether the trend is actually a line.",
+      "keywords": [
+        "regression line",
+        "loess",
+        "trend line",
+        "least squares",
+        "line of best fit",
+        "local regression",
+        "smoother",
+        "scatter with fit",
+        "nonlinear trend",
+        "two measures",
+        "x versus y",
+        "diminishing returns"
+      ],
+      "d3_apis": [
+        "curveCatmullRom",
+        "extent"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-shape"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "residuals",
+      "title": "Residual Plot",
+      "category": "Distribution",
+      "route": "jsx",
+      "source": "original:gaps/residuals",
+      "file": "src/gallery/charts/ResidualPlot.tsx",
+      "lines": 68,
+      "data_shape": "{ x: number; y: number }[]",
+      "when_to_use": "What is left after the fit: residuals scattered around an emphasized zero line. A bow, a fan, or a drift here is the model missing structure — the diagnostic the fitted line itself hides.",
+      "keywords": [
+        "residuals",
+        "residual plot",
+        "model fit",
+        "goodness of fit",
+        "regression diagnostics",
+        "what the model missed",
+        "systematic error",
+        "heteroscedasticity",
+        "zero line",
+        "prediction error",
+        "leftover pattern"
+      ],
+      "d3_apis": [
+        "extent",
+        "max",
+        "scaleLinear"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-scale"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "error-bars",
+      "title": "Error Bars",
+      "category": "Comparison",
+      "route": "jsx",
+      "source": "original:gaps/error-bars",
+      "file": "src/gallery/charts/ErrorBars.tsx",
+      "lines": 74,
+      "data_shape": "{ name: string; value: number; lo: number; hi: number }[]",
+      "when_to_use": "One estimate per category with its interval, horizontal and sorted by value around a zero reference. The intervals that cross zero are the point: those rows proved nothing either way, and a bare bar chart would hide that.",
+      "keywords": [
+        "error bars",
+        "confidence interval",
+        "uncertainty",
+        "point estimate with interval",
+        "treatment effect",
+        "experiment results",
+        "a b test uplift",
+        "effect size",
+        "crosses zero",
+        "interval per category",
+        "forest plot",
+        "estimate and margin"
+      ],
+      "d3_apis": [
+        "max",
+        "min"
+      ],
+      "d3_modules": [
+        "d3-array"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "fan-chart",
+      "title": "Forecast Fan",
+      "category": "Time Series",
+      "route": "jsx",
+      "source": "original:gaps/fan-chart",
+      "file": "src/gallery/charts/FanChart.tsx",
+      "lines": 147,
+      "data_shape": "{ history: { date: Date; value: number }[]; forecast: { date: Date; mid: number; bands: [number, number][] }[]; }",
+      "when_to_use": "History as a solid line, then a forecast median inside nested quantile bands that widen with the horizon. Says the honest thing a single forecast line cannot: how wrong the projection may be, and how fast that grows.",
+      "keywords": [
+        "forecast fan",
+        "prediction interval",
+        "uncertainty",
+        "fan chart",
+        "quantile bands",
+        "forecast",
+        "projection",
+        "confidence bands over time",
+        "widening bands",
+        "future values",
+        "history and forecast",
+        "scenario range"
+      ],
+      "d3_apis": [
+        "max",
+        "min",
+        "utcFormat"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-time"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "bump-chart",
+      "title": "Bump Chart",
+      "category": "Time Series",
+      "route": "jsx",
+      "source": "original:gaps/bump-chart",
+      "file": "src/gallery/charts/BumpChart.tsx",
+      "lines": 118,
+      "data_shape": "{ periods: string[]; series: { name: string; ranks: number[] }[] }",
+      "when_to_use": "Rank per period for a handful of series, with every overtake drawn as a crossing. Reaches past slope's two periods and keeps what bar-chart-race animates readable in one static frame; use it when position matters and magnitude does not.",
+      "keywords": [
+        "bump chart",
+        "rank change",
+        "rank over time",
+        "overtake",
+        "ranking by year",
+        "leaderboard over time",
+        "league table",
+        "standings",
+        "who passed whom",
+        "crossing lines",
+        "point scale",
+        "popularity ranks"
+      ],
+      "d3_apis": [
+        "curveBumpX",
+        "max",
+        "scaleLinear",
+        "scalePoint"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-scale",
+        "d3-shape"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": false
+    },
+    {
+      "id": "adjacency-matrix",
+      "title": "Adjacency Matrix",
+      "category": "Network",
+      "route": "jsx",
+      "source": "original:gaps/adjacency-matrix",
+      "file": "src/gallery/charts/AdjacencyMatrix.tsx",
+      "lines": 130,
+      "data_shape": "{ nodes: { id: string; group: string }[]; links: { source: string; target: string; value: number }[]; groups: string[]; }",
+      "when_to_use": "A dense graph as a grid: one cell per link, rows and columns ordered by cluster so community structure appears as blocks along the diagonal. The escape hatch once a force layout hairballs — it shares its Data shape with force-directed-graph, so the same dataset gets both readings.",
+      "keywords": [
+        "adjacency matrix",
+        "dense network",
+        "matrix ordered by cluster",
+        "hairball alternative",
+        "network as grid",
+        "matrix view of a graph",
+        "community blocks",
+        "nodes and links",
+        "too many edges",
+        "within-group links",
+        "co-occurrence",
+        "graph density"
+      ],
+      "d3_apis": [
+        "ascending",
+        "max"
+      ],
+      "d3_modules": [
+        "d3-array"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": false
+    },
+    {
+      "id": "correlation-heatmap",
+      "title": "Correlation Heatmap",
+      "category": "Heatmap",
+      "route": "jsx",
+      "source": "original:gaps/correlation-heatmap",
+      "file": "src/gallery/charts/CorrelationHeatmap.tsx",
+      "lines": 126,
+      "data_shape": "{ variables: string[]; rows: number[][] }",
+      "when_to_use": "Every pairwise Pearson correlation in one symmetric grid, computed from raw observation rows and drawn on a diverging scale pinned at zero. The first look at a many-column table: blocks of related variables and the odd strong negative pair jump out before any modeling.",
+      "keywords": [
+        "correlation heatmap",
+        "correlation matrix",
+        "pearson",
+        "pairwise correlation",
+        "diverging scale",
+        "which variables move together",
+        "many numeric columns",
+        "multicollinearity",
+        "r value",
+        "observations by variables",
+        "feature relationships",
+        "symmetric matrix"
+      ],
+      "d3_apis": [
+        "format",
+        "interpolateRdBu",
+        "mean",
+        "scaleSequential"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-format",
+        "d3-scale",
+        "d3-scale-chromatic"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": false
+    },
+    {
+      "id": "bullet-chart",
+      "title": "Bullet Chart",
+      "category": "Comparison",
+      "route": "jsx",
+      "source": "original:gaps/bullet-chart",
+      "file": "src/gallery/charts/BulletChart.tsx",
+      "lines": 96,
+      "data_shape": "{ name: string; value: number; target: number; ranges: [number, number, number]; }[]",
+      "when_to_use": "A KPI against its target with graded context: one measure per row, a value bar over poor, satisfactory and good bands, a target tick. Each row carries its own scale, so unrelated units share one compact panel — the answer to 'so what' that a bare bar never gives.",
+      "keywords": [
+        "bullet chart",
+        "kpi against target",
+        "target vs actual",
+        "performance vs goal",
+        "qualitative ranges",
+        "graded bands",
+        "measure and target",
+        "dashboard kpi",
+        "kpi scorecard",
+        "gauge alternative",
+        "own scale per row",
+        "quarterly metrics"
+      ],
+      "d3_apis": [
+        "format",
+        "scaleLinear"
+      ],
+      "d3_modules": [
+        "d3-format",
+        "d3-scale"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": false
+    },
+    {
+      "id": "waterfall",
+      "title": "Waterfall Chart",
+      "category": "Comparison",
+      "route": "jsx",
+      "source": "original:gaps/waterfall",
+      "file": "src/gallery/charts/WaterfallChart.tsx",
+      "lines": 129,
+      "data_shape": "{ name: string; delta: number }[]",
+      "when_to_use": "Decomposes a change into its signed parts: floating bars step a running total from start to finish, so each delta's contribution and the end state read in one pass. Gains and losses differ by fill treatment, not hue alone, and the final Total bar is derived, not supplied.",
+      "keywords": [
+        "waterfall chart",
+        "bridge chart",
+        "running total",
+        "cumulative deltas",
+        "cash bridge",
+        "profit bridge",
+        "increases and decreases",
+        "contribution to change",
+        "floating bars",
+        "variance walk",
+        "start to end",
+        "signed deltas"
+      ],
+      "d3_apis": [
+        "format",
+        "max",
+        "min"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-format"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "gantt",
+      "title": "Gantt Chart",
+      "category": "Time Series",
+      "route": "jsx",
+      "source": "original:gaps/gantt",
+      "file": "src/gallery/charts/GanttChart.tsx",
+      "lines": 126,
+      "data_shape": "{ task: string; lane: string; start: Date; end: Date }[]",
+      "when_to_use": "A task schedule as horizontal interval bars grouped by lane on one shared time axis — who does what when, and which spans overlap. Reach for it when the rows are planned work with owners rather than historical eras or measured events.",
+      "keywords": [
+        "gantt chart",
+        "project timeline",
+        "task schedule",
+        "start and end dates",
+        "interval bars",
+        "tasks by lane",
+        "workstream",
+        "project plan",
+        "duration bars",
+        "overlapping phases",
+        "roadmap",
+        "time axis"
+      ],
+      "d3_apis": [
+        "group",
+        "max",
+        "min",
+        "scaleOrdinal",
+        "schemeObservable10",
+        "timeFormat"
+      ],
+      "d3_modules": [
+        "d3-array",
+        "d3-scale",
+        "d3-scale-chromatic",
+        "d3-time"
+      ],
+      "animated": false,
+      "interactive": false,
+      "uses_shared_geo": false,
+      "uses_shared_axis": true
+    },
+    {
+      "id": "radar",
+      "title": "Radar Chart",
+      "category": "Multivariate",
+      "route": "jsx",
+      "source": "original:gaps/radar",
+      "file": "src/gallery/charts/RadarChart.tsx",
+      "lines": 119,
+      "data_shape": "{ axes: string[]; series: { name: string; values: number[] }[]; }",
+      "when_to_use": "One polygon per series over shared spokes, so each row's profile reads as a shape. Only for few, commensurate series — about three, on axes normalized to the same 0-1 range; past that it overplots into rosettes and parallel coordinates read better.",
+      "keywords": [
+        "radar chart",
+        "spider chart",
+        "web chart",
+        "star plot",
+        "multivariate profile",
+        "attribute scores",
+        "normalized axes",
+        "compare profiles",
+        "polygon per series",
+        "commensurate measures",
+        "product comparison",
+        "strengths and weaknesses"
+      ],
+      "d3_apis": [
+        "scaleLinear",
+        "schemeObservable10"
+      ],
+      "d3_modules": [
+        "d3-scale",
         "d3-scale-chromatic"
       ],
       "animated": false,
