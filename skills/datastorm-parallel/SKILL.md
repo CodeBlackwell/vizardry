@@ -99,10 +99,26 @@ Workflow({
 It runs three stages per option, pipelined so option 3 can be in review while option 14 is still
 building: **Build** (loop the verifier, escalate once up the model ladder if red, carrying the
 failed attempt's evidence), **Review** (a different agent judges the drawn result against the
-rules the verifier cannot check), **Repair** (only cards with defects). Tell the user they can
-watch it with `/workflows`.
+rules the verifier cannot check), **Repair** (only cards with defects).
 
-It returns `{ cards, failed, unreviewed }`.
+It returns `{ cards, failed, unreviewed }`, and **that return value is the input to every step
+below.** The cards carry the prose written into the page; `failed` becomes the rejected rows;
+`unreviewed` is the list you have to judge yourself. None of it can be reconstructed from the
+files on disk, because the reviewer's defects were never written there.
+
+**The workflow is not fire and forget, and this is the one place this skill has actually
+failed.** The tool returns a task id immediately and the real result arrives later. Do not
+announce that the fan-out is running and end your turn. Measured 2026-08-21 on a headless run:
+the main context said it would pick back up once the fan-out completed, ended its turn, and the
+process exited. All 16 builders ran to completion and passed the strict gate — and the run
+produced no report at all, because nothing resumed to assemble one. It cost full price for
+nothing.
+
+So: stay in the turn until the workflow returns, and treat announcing progress as something you
+do *while still working*, never as a handoff. There may be no one to hand off to. If you are
+resuming a session where the fan-out already completed, the fragments on disk are real and
+strict-green, but the cards are not — re-verify first-hand per step 1 and rebuild any card
+prose you cannot recover.
 
 ## After the workflow
 

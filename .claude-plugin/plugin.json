@@ -1,7 +1,7 @@
 {
   "name": "vizardry",
   "description": "Observable-grade data visualizations as React components with D3. Ships /datastorm, which profiles a dataset and brainstorms options from conventional to abstract; /datastorm-parallel, which builds those option charts with concurrent verified agents; the routing rule and component contract as a skill; 181 self-contained exemplars with a retrieval index; a verifier that runs source rules, tsc and a jsdom render over what the model wrote; and /stormclips, which renders deterministic MP4 clips of the charts in a built report.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": {
     "name": "LeChristopher Blackwell"
   },
