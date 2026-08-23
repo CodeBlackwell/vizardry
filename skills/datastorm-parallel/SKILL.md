@@ -49,6 +49,10 @@ A legend warning fires when colour encodes a category and no key rendered.
 Steps 1 through 6 of the serial skill run unchanged, in the main context, before any agent
 spawns — they are cheap, and they need one pair of eyes:
 
+- **The data docket**, when there is one — read once here, never by a builder. Its
+  guidance reaches the fan-out through the specs it shaped (the question wording and the
+  failure-mode field), which is the whole of what a builder needs; shipping the file itself to
+  sixteen agents buys nothing and costs its length every time.
 - **Profile, column roles, grain, shape signature** — one pass over the data. Builders never
   re-read or re-profile the dataset; sixteen slightly different profiles is how a report
   contradicts itself.
@@ -77,6 +81,11 @@ Check the band floors yourself while presenting, because nothing downstream does
 `verify-report.mjs` only warns when a band is completely empty, so a band sitting one under its
 floor ships silently otherwise.
 
+When a docket guided the brainstorm, add a column naming the question each spec serves, or
+`-` for the ones the profile found on its own. That column is the gate's real payload: it shows
+at a glance which of the user's questions went unanswered, and it makes the `-` rows visible as
+the deliberate excess they are rather than as drift.
+
 Offer: approve all, cut or replace named options, or rebalance a band.
 
 ## The fan-out
@@ -87,7 +96,7 @@ kit beside them via the assembler's resolution), then run the shipped workflow:
 ```
 Workflow({
   scriptPath: '<this skill dir>/build.workflow.js',
-  args: { scratchDir, skillDir, specs, briefing }
+  args: { scratchDir, skillDir, specs, briefing, model }
 })
 ```
 
@@ -95,11 +104,18 @@ Workflow({
 - `skillDir` — absolute path to the **datastorm** skill (its `bin/`, `references/`, `assets/`)
 - `specs` — the approved specs, each `{ id, band, dataKeys, ...nine fields }`
 - `briefing` — the shared context: profile summary, grain, palette notes, data caveats
+- `model` — optional. Look for a trailing `--model <name>` in the slash-command's arguments and
+  forward it verbatim; omit the field entirely otherwise. **Omitted (the default):** every
+  build/review/repair agent inherits the active session model, no override — the right choice
+  unless the user asked for something else. **A model name** (`opus`, `sonnet`, `haiku`,
+  `fable`, ...): every stage is pinned to that one model, no ladder. **`dynamic`:** the
+  band-driven cost ladder — conventional options start at haiku, everything else at sonnet,
+  escalating one rung on failure up to `opus` — the old default, still available by name.
 
 It runs three stages per option, pipelined so option 3 can be in review while option 14 is still
-building: **Build** (loop the verifier, escalate once up the model ladder if red, carrying the
-failed attempt's evidence), **Review** (a different agent judges the drawn result against the
-rules the verifier cannot check), **Repair** (only cards with defects).
+building: **Build** (loop the verifier, escalate once up the model ladder if red and `model` is
+`dynamic`, carrying the failed attempt's evidence), **Review** (a different agent judges the
+drawn result against the rules the verifier cannot check), **Repair** (only cards with defects).
 
 It returns `{ cards, failed, unreviewed }`, and **that return value is the input to every step
 below.** The cards carry the prose written into the page; `failed` becomes the rejected rows;

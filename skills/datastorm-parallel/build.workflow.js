@@ -18,11 +18,15 @@ export const meta = {
  * re-runs verify-option.mjs over every fragment first-hand once this returns, because a
  * builder's own "it went green" is a claim, not evidence.
  *
- * args: { scratchDir, skillDir, specs, briefing, maxTier? }
+ * args: { scratchDir, skillDir, specs, briefing, model?, maxTier? }
  *   scratchDir  absolute path to the report build directory
  *   skillDir    absolute path to the datastorm skill (bin/, references/, assets/)
  *   specs       the brainstorm's option specs, each { id, band, dataKeys, ...nine fields }
  *   briefing    shared context: profile summary, grain, palette notes, data caveats
+ *   model       omitted (default): every stage inherits the active session model, no override.
+ *               a model name (e.g. 'opus', 'fable'): every stage is pinned to that one model,
+ *               no ladder. 'dynamic': the band-driven cost ladder below, escalating on failure.
+ *   maxTier     only read when model is 'dynamic' — the ladder's ceiling, default 'opus'
  */
 
 const TIERS = ['haiku', 'sonnet', 'opus']
@@ -98,8 +102,19 @@ const REVIEW = {
 
 const scratch = args.scratchDir
 const skill = args.skillDir
-const maxTier = TIERS.includes(args.maxTier) ? args.maxTier : 'opus'
 const specs = Array.isArray(args.specs) ? args.specs : []
+
+const modelArg = typeof args.model === 'string' ? args.model.trim() : ''
+const dynamic = modelArg.toLowerCase() === 'dynamic'
+// A named model with no ladder concept of its own — 'fable' is not a rung between sonnet and
+// opus, it is a different family entirely, so a fixed model gets exactly one rung: itself.
+const fixedModel = !dynamic && modelArg ? modelArg : undefined
+const maxTier = dynamic ? (TIERS.includes(args.maxTier) ? args.maxTier : 'opus') : undefined
+const describeTier = (t) => t || 'active'
+
+// The ladder of models to try, in order, for one option. Dynamic keeps the existing
+// band-driven escalation; a fixed model or the default (inherit) is a single rung.
+const ladderFor = (spec) => (dynamic ? ladderFrom(startTier(spec.band), maxTier) : [fixedModel])
 
 const optionFile = (id) => `${scratch}/option-${id}.js`
 const evidenceFile = (id) => `${scratch}/.datastorm/evidence-${id}.json`
@@ -141,7 +156,7 @@ verifier's final output (or the missing key) in 'detail'.`
 /* Escalation only beats the failed tier's ceiling if it knows what failed — and that the
  * failed attempt's file is still sitting on disk waiting to mislead it. */
 const priorAttemptText = (spec, prior) => {
-  const lines = [`\nA ${prior.tier}-tier attempt at this option already FAILED.`]
+  const lines = [`\nAn earlier attempt at this option (${prior.tier}) already FAILED.`]
   if (!prior.card) lines.push('It died before returning — treat anything it left as unproven.')
   else if (prior.card.detail) lines.push(`Its own account: ${fence(prior.card.detail)}`)
   lines.push(
@@ -204,40 +219,43 @@ in 'detail' — do not reach outside the file, and do not silently drop it.`
 // ---------------------------------------------------------------------------------------
 phase('Build')
 log(`Building ${specs.length} option${specs.length === 1 ? '' : 's'} concurrently, ` +
-  `ladder capped at ${maxTier}`)
+  (dynamic ? `ladder capped at ${maxTier}` : fixedModel ? `model fixed at ${fixedModel}` : 'using the active session model'))
 
 const attempts = clampInt(args.attemptsPerTier, 1, 3, 1)
 
 const results = await pipeline(
   specs,
 
-  // Build, with a strictly-upward ladder. Iterating the ladder array IS the "one shot per
-  // tier" rule — there is no branch that reruns a tier, so it cannot happen.
+  // Build. Dynamic mode walks a strictly-upward ladder — iterating the array IS the "one
+  // shot per tier" rule, there is no branch that reruns a rung, so it cannot happen. A fixed
+  // or default model is a ladder of one, so this loop still gives it its `attempts` retries.
   async (_prev, spec) => {
-    const ladder = ladderFrom(startTier(spec.band), maxTier)
+    const ladder = ladderFor(spec)
     let prior = null
     for (const tier of ladder) {
       for (let a = 0; a < attempts; a++) {
-        const card = await tryAgent(buildBrief(spec, prior), {
-          label: `build:${spec.id}:${tier}`, phase: 'Build', schema: CARD, model: tier
-        })
+        const opts = { label: `build:${spec.id}:${describeTier(tier)}`, phase: 'Build', schema: CARD }
+        if (tier) opts.model = tier
+        const card = await tryAgent(buildBrief(spec, prior), opts)
         if (card && card.status === 'built') return { spec, card, tier }
-        prior = { tier, card }
+        prior = { tier: describeTier(tier), card }
       }
       if (tier !== ladder[ladder.length - 1]) {
-        log(`${spec.id} red at ${tier} — escalating with the failed attempt's evidence`)
+        log(`${spec.id} red at ${describeTier(tier)} — escalating with the failed attempt's evidence`)
       }
     }
-    log(`${spec.id} exhausted the ladder (${ladder.join(' -> ')}) — it becomes a rejected row`)
+    log(`${spec.id} exhausted the ladder (${ladder.map(describeTier).join(' -> ')}) — it becomes a rejected row`)
     return { spec, card: prior && prior.card, tier: ladder[ladder.length - 1], exhausted: true }
   },
 
-  // Review. A built card only; a failed one has nothing to judge.
+  // Review. A built card only; a failed one has nothing to judge. Dynamic mode pins the
+  // reviewer to sonnet regardless of build tier, by design; fixed/default modes follow suit.
   async (built) => {
     if (!built || !built.card || built.exhausted) return built
-    const review = await tryAgent(reviewBrief(built.spec, built.card), {
-      label: `review:${built.spec.id}`, phase: 'Review', schema: REVIEW, model: 'sonnet'
-    })
+    const reviewModel = dynamic ? 'sonnet' : fixedModel
+    const opts = { label: `review:${built.spec.id}`, phase: 'Review', schema: REVIEW }
+    if (reviewModel) opts.model = reviewModel
+    const review = await tryAgent(reviewBrief(built.spec, built.card), opts)
     // A dead reviewer is no evidence of a clean card. Say so rather than calling it green.
     if (!review) return { ...built, reviewFailed: true }
     return { ...built, defects: review.defects || [] }
@@ -248,10 +266,10 @@ const results = await pipeline(
     if (!reviewed || !reviewed.defects || reviewed.defects.length === 0) return reviewed
     const { spec, card, defects } = reviewed
     log(`${spec.id}: ${defects.length} defect(s) — ${defects.map((d) => d.rule).join('; ')}`)
-    const repaired = await tryAgent(repairBrief(spec, card, defects), {
-      label: `repair:${spec.id}`, phase: 'Repair', schema: CARD,
-      model: reviewed.tier === 'haiku' ? 'sonnet' : reviewed.tier
-    })
+    const repairModel = dynamic ? (reviewed.tier === 'haiku' ? 'sonnet' : reviewed.tier) : fixedModel
+    const opts = { label: `repair:${spec.id}`, phase: 'Repair', schema: CARD }
+    if (repairModel) opts.model = repairModel
+    const repaired = await tryAgent(repairBrief(spec, card, defects), opts)
     if (!repaired) return { ...reviewed, unrepaired: defects }
     return { ...reviewed, card: repaired, repairedFrom: defects }
   }

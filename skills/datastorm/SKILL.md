@@ -22,6 +22,37 @@ procedure with the worked examples built by concurrent agents, one per option.
 
 ## The procedure
 
+### 0. The data docket, if there is one
+
+Look for `docs/questions.md` or `questions.md` beside the data, and read it if the user points
+at one. It is what someone who works with this data knows and a profile cannot measure: the
+questions worth answering, the denominators that may never be mixed, the counts that may never
+be totalled, and the dead ends already ruled out. `/data-docket` produces one by grilling
+the user, and running it first is the cheapest way to make this report land.
+
+Two of its sections outrank the rest. **"One chart, several questions"** names entries their
+owner already thinks are one picture, and says which denominators those panels do not share —
+read it as strong candidates for the analytical band, and carry the denominator labels onto the
+chart. **"Newly askable, not yet measured"** lists questions with ground under them and no
+answer yet; those are where an option nobody asked for is most likely to be wanted. And where
+the docket states a grain because that is where counts are additive, keep that grain — it is
+the difference between a chart that totals correctly and one that does not.
+
+**It is guiding context, never a specification.** It supplies the vocabulary for each option's
+"the question it answers" field, real failure-mode fields instead of generic ones, and a
+head start on the rejected list. It does **not** cap the option space: still profile the data
+yourself, still generate 12 to 20 options across all three bands, and still propose options the
+docket never mentions — the creative-abstract band exists to find what nobody thought to ask.
+Eight questions in a docket does not mean eight options, and an option is not disqualified for
+being absent from it.
+
+**When the two disagree, the profile wins on facts and the docket wins on meaning.** If the
+docket calls a column a count and the file says it is text, the file is right and the report
+says so in Notes on the data. If the file shows two columns correlated and the docket says one
+is a proxy for the other, the docket is right and the correlation is not a finding.
+
+Without a docket, proceed — everything below stands on its own.
+
 ### 1. Get the data shape
 
 **If the user described the shape, use their description** and say so in the report. Do not go
@@ -229,6 +260,9 @@ Write the markdown version only if the user asks for one. The page is the report
   is a downgrade. Say which abstract options trade accuracy for engagement, and by how much.
 - **No chart the data cannot support.** A geographic option needs a geographic column. A network
   option needs a real edge list. Wanting one is not having one.
+- **The docket guides, it does not rule.** A data docket raises the priority of the
+  options that answer its questions and hands over honesty conditions worth quoting. It never
+  becomes the table of contents, and an option outside it is not thereby rejected.
 - **Name the transform.** If an option needs the data pivoted, ranked, binned, joined or
   aggregated first, write that step down. An option whose input does not exist yet is a project,
   not a chart, and the user deserves to know which is which.
