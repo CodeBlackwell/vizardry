@@ -7,6 +7,7 @@
  *
  *   node verify-option.mjs <option.js> [more.js ...] [--data chartdata.json] [--page page.html]
  *                          [--keys a,b,c] [--strict] [--emit evidence.json]
+ *   node verify-option.mjs --check-keys --data chartdata.json --specs specs.json
  *
  * `--keys` are the option spec's declared dataKeys; without them the two adherence checks do
  * not run, which is what keeps the serial /datastorm path unchanged. `--strict` turns the
@@ -34,7 +35,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { JSDOM, VirtualConsole } from 'jsdom';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -55,13 +55,59 @@ const pageFlag = flag('--page');
 // serial /datastorm path byte-identical to before they existed.
 const declaredKeys = (flag('--keys') ?? '').split(',').map((k) => k.trim()).filter(Boolean);
 const emitPath = flag('--emit');
+// GATE-SPECS's preflight: resolve every spec's dataKeys against chartdata.json with no
+// fragment and no jsdom. Takes a specs file ([{id, dataKeys}]) or a bare --keys list.
+const specsFlag = flag('--specs');
+const checkKeys = bool('--check-keys');
 // The parallel builder passes --strict for an option card; a profile-section chart does not.
 const strict = bool('--strict');
 const files = args;
 
+// --- spec preflight ---------------------------------------------------------------------
+// The gate's own promise is that a missing aggregate costs one line here and a whole builder
+// after. That only holds if it can be checked, so: a pure set difference over chartdata.json,
+// every spec at once, in milliseconds, before the fan-out spends anything.
+if (checkKeys) {
+  const dataPath = dataFlag ?? 'chartdata.json';
+  if (!existsSync(dataPath)) {
+    console.error(`--check-keys: no data file at ${dataPath}`);
+    process.exit(1);
+  }
+  // Refuse rather than report a vacuous pass: a gate that reads green having checked
+  // nothing is worse than no gate, because it is believed.
+  if (!specsFlag && declaredKeys.length === 0) {
+    console.error('--check-keys needs something to check: pass --specs specs.json or --keys a,b,c');
+    process.exit(1);
+  }
+  const available = new Set(Object.keys(JSON.parse(readFileSync(dataPath, 'utf8'))));
+  const specs = specsFlag
+    ? JSON.parse(readFileSync(specsFlag, 'utf8'))
+    : [{ id: '(--keys)', dataKeys: declaredKeys }];
+  let failingSpecs = 0;
+  console.log(dataPath);
+  for (const spec of specs) {
+    const declared = (spec.dataKeys ?? []).filter(Boolean);
+    const missing = declared.filter((k) => !available.has(k));
+    if (missing.length) failingSpecs += 1;
+    console.log(`  ${missing.length ? 'FAIL' : 'PASS'}  ${spec.id}` +
+      (missing.length ? `\n        absent from the data: ${missing.join(', ')}` : ''));
+  }
+  console.log(failingSpecs
+    ? `\n${failingSpecs} of ${specs.length} spec(s) declare an aggregate prep.py does not ` +
+      'compute. Add it and rebuild chartdata.json before dispatching.'
+    : `\nAll ${specs.length} spec(s) resolve against the data.`);
+  process.exit(failingSpecs ? 1 : 0);
+}
+
+// Loaded here rather than at the top because only RUNNING a fragment needs a DOM. The
+// preflight above is a set difference over JSON, and making the earliest and cheapest gate
+// the one with the heaviest prerequisite is how it ends up not being run.
+const { JSDOM, VirtualConsole } = await import('jsdom');
+
 if (files.length === 0 || files.some((f) => !existsSync(f))) {
   console.error('usage: verify-option.mjs <option.js> [more.js ...] [--data chartdata.json] ' +
-    '[--page page.html] [--keys a,b,c] [--strict] [--emit evidence.json]');
+    '[--page page.html] [--keys a,b,c] [--strict] [--emit evidence.json]\n' +
+    '       verify-option.mjs --check-keys --data chartdata.json [--specs specs.json | --keys a,b]');
   process.exit(1);
 }
 
@@ -261,13 +307,16 @@ for (const file of files) {
     else if (!tipFired) warnings.push(tipDetail[0] + '; only a profile-section chart may skip it');
 
     // --- data adherence ------------------------------------------------------------------
-    // `meta` is always allowed: computing a legend label from D.meta.* is the no-hardcoded-
-    // findings rule done right, and specs do not list it as a dataKey.
-    const read = (win.__reads || []).filter((k) => k !== 'meta');
+    // `meta` is exempt in ONE direction only. Reading D.meta.* without declaring it is the
+    // no-hardcoded-findings rule done right, so it is never an undeclared extra. It is NOT
+    // exempt from `missing`: a spec may legitimately declare it, and stripping it from the
+    // reads before that comparison made the check unsatisfiable by any fragment — the chart
+    // could read meta, prove it in the evidence, and still be told it never did.
+    const read = win.__reads || [];
     evidence.keysRead = read;
     if (declaredKeys.length) {
       const missing = declaredKeys.filter((k) => !read.includes(k));
-      const extra = read.filter((k) => !declaredKeys.includes(k));
+      const extra = read.filter((k) => k !== 'meta' && !declaredKeys.includes(k));
       check('keys-declared', missing.length === 0, [
         `declared but never read: ${missing.join(', ')}`,
         'the spec names the aggregates this example draws from — draw from them, or say in ' +

@@ -12,8 +12,10 @@ follow them everywhere this file is silent.
 
 Two things change. **Who draws**: serially, twenty worked examples and their fix loops run
 through one context, so chart fourteen's third repair blocks chart fifteen from starting. Here
-each option gets its own agent and the wall clock becomes the slowest option rather than the
-sum of all of them. **Who says it is good**: a builder no longer certifies its own card. Every
+each option gets its own agent and the wall clock becomes `max(the slowest single chain, total
+agent time / the concurrency cap)` rather than the sum of all of them. That cap is
+`min(16, CPUs - 2)`, and reviewers and repairs draw on it too, so past roughly a dozen options
+it is the cap rather than the slowest chain that sets the clock. **Who says it is good**: a builder no longer certifies its own card. Every
 fragment is re-verified first-hand after the fan-out, and every card is judged by an agent that
 did not build it.
 
@@ -34,7 +36,11 @@ than imitating the fan-out with sequential agents.
   warning by default and a failure under `--strict`, which is what an option card gets.
 - **`keys-declared` / `keys-only`** record which top-level aggregates the chart actually read
   and compare them to the spec's `dataKeys`. This is what makes "everything drawn traces to
-  `chartdata.json`" mechanical. `meta` is always allowed.
+  `chartdata.json`" mechanical. `meta` is exempt in one direction only:
+  reading it undeclared is never a defect, and a spec that *does* declare it must still draw
+  from it. It was once stripped from the reads before both comparisons, which made
+  `keys-declared` unsatisfiable for any spec that named it — a real run lost five finished
+  charts to exactly that.
 - **`palette-members`** fails any `P.<name>` the kit does not define — `P.accent` and
   `P.surface` look right and are `undefined` at runtime — and any `d3.scheme*`, which is fixed
   ink that never flips with the theme.
@@ -76,6 +82,24 @@ returns, with every drawn result, defect and failure in view.
 band, the question, and `dataKeys`. This is the only gate in the run, and it is the last cheap
 moment — a wrong option or a missing aggregate costs one line here and a whole builder after.
 
+**Write `prep.py`, build `chartdata.json`, and run the preflight before you present the gate.**
+The sentence above is only true if a missing aggregate can actually be seen here, and before the
+preflight existed it could not be: it surfaced one builder at a time, an hour later, as a
+`failed` card.
+
+```bash
+node <skill>/bin/verify-option.mjs --check-keys --data <scratch>/chartdata.json --specs <scratch>/specs.json
+```
+
+It is a set difference, no fragment and no jsdom, and it exits non-zero naming every spec whose
+`dataKeys` name something `prep.py` does not compute. Green before the gate, or the gate is
+decoration.
+
+**Name the report at this gate too.** Two to four words, and where the profile or the docket
+states the frame the data actually sits in, the name carries it — a report drawn over a whole
+department should not be named for one service inside it. Renaming after delivery costs a
+rebuild and a republish; renaming here costs a line.
+
 Check the band floors yourself while presenting, because nothing downstream does:
 **conventional 4-6, analytical 4-8, creative-abstract 4-6**, 12 to 20 total.
 `verify-report.mjs` only warns when a band is completely empty, so a band sitting one under its
@@ -113,13 +137,16 @@ Workflow({
   escalating one rung on failure up to `opus` — the old default, still available by name.
 
 It runs three stages per option, pipelined so option 3 can be in review while option 14 is still
-building: **Build** (loop the verifier, escalate once up the model ladder if red and `model` is
-`dynamic`, carrying the failed attempt's evidence), **Review** (a different agent judges the
-drawn result against the rules the verifier cannot check), **Repair** (only cards with defects).
+building: **Build** (loop the verifier, escalate up the model ladder if red and `model` is `dynamic`,
+carrying the failed attempt's evidence — but stopping the moment two tiers go red on the *same*
+check, which is evidence the constraint binds rather than the model), **Review** (a different
+agent judges the drawn result against the rules the verifier cannot check; blocked cards are
+reviewed too, because they are drawn), **Repair** (only cards with defects).
 
-It returns `{ cards, failed, unreviewed }`, and **that return value is the input to every step
-below.** The cards carry the prose written into the page; `failed` becomes the rejected rows;
-`unreviewed` is the list you have to judge yourself. None of it can be reconstructed from the
+It returns `{ cards, blocked, failed, unreviewed }`, and **that return value is the input to
+every step below.** The cards carry the prose written into the page; `failed` becomes the
+rejected rows; `blocked` is drawn work awaiting your adjudication; `unreviewed` is the list you
+have to judge yourself. None of it can be reconstructed from the
 files on disk, because the reviewer's defects were never written there.
 
 **The workflow is not fire and forget, and this is the one place this skill has actually
@@ -165,15 +192,23 @@ Back in the main context, deterministic work plus the one judgment call:
    `detail` names a missing dataKey, add the aggregate to `prep.py`, rebuild `chartdata.json`,
    and re-dispatch just that spec.
 
-5. **Read `unreviewed` and any `unrepaired`.** An id in `unreviewed` was never judged — its
+5. **Adjudicate `blocked`.** Each of these drew, reviewed clean, and went red on one check its
+   own fragment could not influence — a spec or harness rule, not a chart defect. The file is on
+   disk and strict-green but for that check. Read the named check, decide whether the spec was
+   the thing that was wrong, and either accept the card into the page or move it to the rejected
+   rows with the reason. **Do not re-dispatch it unchanged, and do not rebuild it by hand before
+   reading it**: the work is already done, and discarding it is the exact loss this state exists
+   to stop.
+
+6. **Read `unreviewed` and any `unrepaired`.** An id in `unreviewed` was never judged — its
    reviewer died — so review it yourself or say in the notes that it was not. An `unrepaired`
    defect is a known flaw: fix it or record it, never drop it.
 
-6. **Write the cards into `page.html`** from the returned fields — builders never touch the
+7. **Write the cards into `page.html`** from the returned fields — builders never touch the
    page — then rank the top three with the results in view, and finish the rail, recommended,
    rejected and notes sections.
 
-7. **Gate and deliver exactly as the serial skill does**: `build.mjs`, then
+8. **Gate and deliver exactly as the serial skill does**: `build.mjs`, then
    `../datastorm/bin/verify-report.mjs` green before the page ships, then publish per
    /datastorm's Output section.
 

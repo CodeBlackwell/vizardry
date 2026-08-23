@@ -64,12 +64,24 @@ const ladderFrom = (start, maxTier) => {
 const FIELDS = ['name', 'family', 'question', 'encoding', 'why', 'color', 'interaction',
   'failure', 'exemplar', 'caption']
 
+/* The named checks a verifier run went red on. Two tiers red on the identical set is
+ * evidence that the constraint binds rather than the model, which is the one thing the
+ * ladder cannot otherwise see: its whole premise is that failure is capability-limited. */
+const failSignature = (card) => {
+  const names = [...String((card && card.detail) || '').matchAll(/FAIL\s+([a-z][\w-]*)/gi)]
+    .map((m) => m[1].toLowerCase())
+  return [...new Set(names)].sort().join('+')
+}
+
 const CARD = {
   type: 'object',
   required: ['id', 'status', ...FIELDS],
   properties: {
     id: { type: 'string' },
-    status: { enum: ['built', 'failed'] },
+    // 'blocked' is the state a real run produced five of and had no word for: the chart
+    // draws and is correct, but one check cannot be satisfied by ANY fragment, so the
+    // builder can neither pass nor honestly call its own working chart a failure.
+    status: { enum: ['built', 'failed', 'blocked'] },
     ...Object.fromEntries(FIELDS.map((k) => [k, { type: 'string', minLength: 1 }])),
     detail: { type: 'string' },
     filesTouched: { type: 'array', items: { type: 'string' } }
@@ -151,7 +163,15 @@ drawing (the chart routinely corrects a draft field — that correction is the p
 'caption' saying what the chart turned out to say, and 'filesTouched' listing every file you
 wrote. If a dataKey you need is missing from chartdata.json, or your last verify still fails,
 do NOT recompute data or write outside your one file: return status 'failed' with the
-verifier's final output (or the missing key) in 'detail'.`
+verifier's final output (or the missing key) in 'detail'.
+
+There is a third state, and using it correctly is worth more than forcing either of the
+others. Return status 'blocked' when the chart DRAWS and is correct, every other check is
+green, and the one red check cannot be satisfied by any fragment — a rule about the spec or
+the harness rather than about your code. Name the check and say in 'detail' why no code in
+your file could change it, and fill the nine fields as normal: the file stays on disk and the
+main context adjudicates. Do not reach for 'blocked' for a check you simply have not fixed —
+'failed' is the honest word for that, and a wrongly blocked card is caught first-hand.`
 
 /* Escalation only beats the failed tier's ceiling if it knows what failed — and that the
  * failed attempt's file is still sitting on disk waiting to mislead it. */
@@ -194,8 +214,8 @@ Check exactly these, and report only what you can point at in the evidence:
 
 Return { defects: [] } when it holds up. One row per rule ACTUALLY broken.`
 
-const repairBrief = (spec, card, defects) => `Repair ONE chart in a datastorm report. It renders
-and passes the verifier; a reviewer found it breaks rules the verifier cannot check.
+const repairBrief = (spec, card, defects, blocking) => `Repair ONE chart in a datastorm report.
+It renders; a reviewer found it breaks rules the verifier cannot check.
 
 The file, which you may edit and which is the ONLY file you may touch: ${optionFile(spec.id)}
 
@@ -209,8 +229,10 @@ Fix the smallest thing that resolves each defect. A defect about the caption or 
 fixed by correcting that text in your returned card, not by redrawing. A defect about the
 drawing is fixed in the fragment. Do not redesign the chart.
 
-Re-verify before returning, and stay green:
+Re-verify before returning:
 ${verifyCmd(spec)}
+${blocking ? `\nThis card is BLOCKED on \`${blocking}\`, which no code in this file can satisfy — that is already established and is not yours to fix. Every OTHER check must stay green; do not chase a clean exit code you cannot reach, and do not change the chart to try.\n`
+  : ''}
 
 Return the card with every field as it now stands, status 'built'. If a defect cannot be fixed
 inside this one file, return the card with status 'built' anyway and name the unresolved defect
@@ -232,14 +254,28 @@ const results = await pipeline(
   async (_prev, spec) => {
     const ladder = ladderFor(spec)
     let prior = null
+    let priorSig = null
     for (const tier of ladder) {
       for (let a = 0; a < attempts; a++) {
         const opts = { label: `build:${spec.id}:${describeTier(tier)}`, phase: 'Build', schema: CARD }
         if (tier) opts.model = tier
         const card = await tryAgent(buildBrief(spec, prior), opts)
         if (card && card.status === 'built') return { spec, card, tier }
+        // A chart that draws but cannot influence the check holding it red is not going to
+        // be rescued by a larger model. Take it as it stands and let the main context judge.
+        if (card && card.status === 'blocked') {
+          log(`${spec.id} blocked at ${describeTier(tier)}: ${capText(card.detail, 140)}`)
+          return { spec, card, tier, blocked: true }
+        }
         prior = { tier: describeTier(tier), card }
       }
+      const sig = failSignature(prior && prior.card)
+      if (sig && sig === priorSig) {
+        log(`${spec.id} red on the same check at two tiers (${sig}) — stopping the ladder, ` +
+          'this is constraint-limited rather than model-limited')
+        return { spec, card: prior.card, tier, exhausted: true, repeatedSignature: sig }
+      }
+      priorSig = sig
       if (tier !== ladder[ladder.length - 1]) {
         log(`${spec.id} red at ${describeTier(tier)} — escalating with the failed attempt's evidence`)
       }
@@ -251,6 +287,9 @@ const results = await pipeline(
   // Review. A built card only; a failed one has nothing to judge. Dynamic mode pins the
   // reviewer to sonnet regardless of build tier, by design; fixed/default modes follow suit.
   async (built) => {
+    // A blocked card IS drawn, so it gets the same independent judgment. Skipping it would
+    // mean the main context could only accept an unreviewed card, which is the one promise
+    // this pipeline exists to keep.
     if (!built || !built.card || built.exhausted) return built
     const reviewModel = dynamic ? 'sonnet' : fixedModel
     const opts = { label: `review:${built.spec.id}`, phase: 'Review', schema: REVIEW }
@@ -269,36 +308,46 @@ const results = await pipeline(
     const repairModel = dynamic ? (reviewed.tier === 'haiku' ? 'sonnet' : reviewed.tier) : fixedModel
     const opts = { label: `repair:${spec.id}`, phase: 'Repair', schema: CARD }
     if (repairModel) opts.model = repairModel
-    const repaired = await tryAgent(repairBrief(spec, card, defects), opts)
+    const repaired = await tryAgent(
+      repairBrief(spec, card, defects, reviewed.blocked ? failSignature(card) : ''), opts)
     if (!repaired) return { ...reviewed, unrepaired: defects }
     return { ...reviewed, card: repaired, repairedFrom: defects }
   }
 )
 
 const rows = results.filter(Boolean)
-const built = rows.filter((r) => r.card && !r.exhausted)
+const built = rows.filter((r) => r.card && !r.exhausted && !r.blocked)
+const blocked = rows.filter((r) => r.blocked && r.card)
 const failed = rows.filter((r) => r.exhausted || !r.card)
 const unrepaired = rows.filter((r) => r.unrepaired)
 const unreviewed = rows.filter((r) => r.reviewFailed)
 
-log(`Done: attempted ${specs.length}, built ${built.length}, failed ${failed.length}, ` +
-  `repaired ${rows.filter((r) => r.repairedFrom).length}, unrepaired ${unrepaired.length}, ` +
-  `unreviewed ${unreviewed.length}`)
+log(`Done: attempted ${specs.length}, built ${built.length}, blocked ${blocked.length}, ` +
+  `failed ${failed.length}, repaired ${rows.filter((r) => r.repairedFrom).length}, ` +
+  `unrepaired ${unrepaired.length}, unreviewed ${unreviewed.length}`)
+
+const asCard = (r) => ({
+  ...r.card,
+  id: r.spec.id,
+  band: r.spec.band,
+  tier: r.tier,
+  defectsFound: (r.defects || []).length,
+  unrepaired: r.unrepaired || undefined
+})
 
 return {
-  cards: built.map((r) => ({
-    ...r.card,
-    id: r.spec.id,
-    band: r.spec.band,
-    tier: r.tier,
-    defectsFound: (r.defects || []).length,
-    unrepaired: r.unrepaired || undefined
-  })),
+  cards: built.map(asCard),
+  // Drawn, reviewed, and green but for one check no fragment can satisfy. These are NOT
+  // rejected rows: the file is on disk and the main context decides, which is the whole
+  // point of the state — five working charts were once discarded for want of this word.
+  blocked: blocked.map(asCard),
   failed: failed.map((r) => ({
     id: r.spec.id,
     band: r.spec.band,
     detail: (r.card && r.card.detail) || 'the builder died before returning a card',
-    tier: r.tier
+    tier: r.tier,
+    // Set when the ladder stopped early because two tiers went red identically.
+    repeatedSignature: r.repeatedSignature || undefined
   })),
   // Named so the main context can tell "reviewed and clean" from "never reviewed".
   unreviewed: unreviewed.map((r) => r.spec.id)
