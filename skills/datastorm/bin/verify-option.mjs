@@ -102,7 +102,14 @@ if (checkKeys) {
 // Loaded here rather than at the top because only RUNNING a fragment needs a DOM. The
 // preflight above is a set difference over JSON, and making the earliest and cheapest gate
 // the one with the heaviest prerequisite is how it ends up not being run.
-const { JSDOM, VirtualConsole } = await import('jsdom');
+// A missing toolchain answers with the npm install to run, not a module-not-found stack —
+// this tool ships into a plugin whose dependencies the user installs separately.
+const { JSDOM, VirtualConsole } = await import('jsdom').catch(() => {
+  let root = here;
+  while (!existsSync(join(root, 'package.json')) && dirname(root) !== root) root = dirname(root);
+  console.error(`jsdom is not installed — run \`npm install\` in ${root} first`);
+  process.exit(1);
+});
 
 if (files.length === 0 || files.some((f) => !existsSync(f))) {
   console.error('usage: verify-option.mjs <option.js> [more.js ...] [--data chartdata.json] ' +

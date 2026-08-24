@@ -4,6 +4,26 @@ A Claude Code plugin for data visualization that holds up. It covers the whole a
 what to draw, drawing it in a dialect that survives React, and checking that what came out
 actually works.
 
+## Install
+
+In Claude Code:
+
+```
+/plugin marketplace add CodeBlackwell/vizardry
+/plugin install vizardry@vizardry
+```
+
+The skills work immediately. The verifiers need their toolchain once per install — the first
+run tells you the exact directory to `npm install` in if it is missing.
+
+## Quickstart
+
+1. Install, as above.
+2. In any repo, run `/datastorm` — name a CSV or JSON file, or let it find one. No data
+   handy? Ask for the bundled sample, 400 quakes from the USGS catalog.
+3. Open the report it writes. Every option on the page is a live chart drawn from the real
+   data, ranked, with the failure modes stated.
+
 ## What's in it
 
 | | |
@@ -19,8 +39,20 @@ The skills compose: `/datastorm` decides what to draw and names the exemplar, th
 skill builds it, the verifiers say whether it holds up, and `/stormclips` takes the finished
 report to video.
 
-**See it before you run it:** a full report built by `/datastorm` from the USGS earthquake
-catalog is live at [vizardry.codeblackwell.ai](https://vizardry.codeblackwell.ai).
+**See it before you run it:** [vizardry.codeblackwell.ai](https://vizardry.codeblackwell.ai)
+carries a full `/datastorm` report built from the GitHub Innovation Graph at
+[/report.html](https://vizardry.codeblackwell.ai/report.html), and one from the USGS
+earthquake catalog at
+[/earthquakes.html](https://vizardry.codeblackwell.ai/earthquakes.html).
+
+## Requirements
+
+- Node 18+. The verifiers' toolchain (`esbuild`, `jsdom`, `typescript`) comes from one
+  `npm install` in the plugin checkout; each verifier checks for it and prints the exact
+  directory when it is missing.
+- `/stormclips` alone needs Chrome and `ffmpeg`, and asks for them when you run it. No
+  other skill uses them.
+- Developed on macOS, CI-verified on Linux. Windows is untested.
 
 ## Using the tools directly
 

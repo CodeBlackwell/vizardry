@@ -17,9 +17,17 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { JSDOM, VirtualConsole } from 'jsdom';
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+// A missing toolchain answers with the npm install to run, not a module-not-found stack —
+// this tool ships into a plugin whose dependencies the user installs separately.
+const { JSDOM, VirtualConsole } = await import('jsdom').catch(() => {
+  let root = here;
+  while (!existsSync(join(root, 'package.json')) && dirname(root) !== root) root = dirname(root);
+  console.error(`jsdom is not installed — run \`npm install\` in ${root} first`);
+  process.exit(1);
+});
 
 const args = process.argv.slice(2);
 const flag = (name) => {

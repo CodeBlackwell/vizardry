@@ -1,0 +1,38 @@
+# CI for the shipped vizardry repo: prove its integrity and its toolchain without the
+# private gallery that generated it. Shipped by build-plugin.mjs — edit in the gallery.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  manifest:
+    name: Every shipped file matches its manifest hash
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node .github/verify-manifest.mjs
+
+  smoke:
+    name: Retrieval and one exemplar verify end to end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Retrieval answers a request
+        run: node skills/d3-react-charts/bin/retrieve.mjs "flows between stages over time" --why
+      - name: One exemplar verifies in a bare project
+        run: |
+          mkdir -p /tmp/smoke && cd /tmp/smoke
+          npm init -y > /dev/null
+          npm install react react-dom d3 @types/react @types/react-dom @types/d3 typescript > /dev/null
+          cp "$GITHUB_WORKSPACE/skills/d3-react-charts/catalog/exemplars/bar.tsx" .
+          node "$GITHUB_WORKSPACE/skills/d3-react-charts/bin/verify.mjs" bar.tsx

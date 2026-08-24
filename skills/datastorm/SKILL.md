@@ -65,7 +65,10 @@ looking for a file to contradict them.
 data/  datasets/  fixtures/  public/data/  notebooks/
 ```
 
-Pick the largest plausible candidate, or ask which one when several are equally likely. Then
+Pick the largest plausible candidate, or ask which one when several are equally likely. If
+there is nothing to find and the user has nothing to hand, offer the bundled sample —
+`sample/earthquakes.csv` beside this SKILL.md, 400 quakes from the USGS catalog — so the
+first run can proceed. Then
 **profile it by reading it**, never by inferring from the filename:
 
 ```bash

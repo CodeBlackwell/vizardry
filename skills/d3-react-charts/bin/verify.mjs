@@ -13,8 +13,6 @@
  * src/gallery/__tests__/chartRules.ts is the single rule oracle and is transpiled at runtime
  * rather than restated here. Packaging copies it next to this file, so both layouts resolve.
  */
-import { build, transform } from 'esbuild';
-import { JSDOM } from 'jsdom';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -22,6 +20,23 @@ import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+// A missing toolchain answers with the npm install to run, not a module-not-found stack —
+// this tool ships into a plugin whose dependencies the user installs separately.
+let toolRoot = here;
+while (!existsSync(join(toolRoot, 'package.json')) && dirname(toolRoot) !== toolRoot) {
+  toolRoot = dirname(toolRoot);
+}
+for (const dep of ['esbuild', 'jsdom', 'typescript']) {
+  try {
+    createRequire(import.meta.url).resolve(dep);
+  } catch {
+    console.error(`${dep} is not installed — run \`npm install\` in ${toolRoot} first`);
+    process.exit(1);
+  }
+}
+const { build, transform } = await import('esbuild');
+const { JSDOM } = await import('jsdom');
 
 const TSC_FLAGS = [
   '--noEmit', '--jsx', 'react-jsx', '--esModuleInterop', '--skipLibCheck', '--strict',

@@ -14,7 +14,9 @@ than a capture constraint.
 
 `puppeteer-core` (`npm i -D puppeteer-core`, or `PUPPETEER_CORE_PATH` to an existing copy), a
 real Chrome (`--chrome`, `CHROME_PATH`, or the macOS default install), and `ffmpeg` on PATH (or
-`FFMPEG`). **Never run two captures concurrently** — they would fight over one Chrome's virtual
+`FFMPEG`). These are prerequisites of this skill only — no other Vizardry skill needs them.
+Check for Chrome and `ffmpeg` before establishing anything else, and if one is missing, tell
+the user what to install (`brew install ffmpeg` on macOS) and stop until they have. **Never run two captures concurrently** — they would fight over one Chrome's virtual
 clock and both produce garbage. The rig enforces this with a `.capture-lock` in the output
 directory; a second invocation fails fast rather than corrupting the first.
 
