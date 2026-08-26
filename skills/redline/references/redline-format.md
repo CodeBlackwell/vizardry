@@ -256,6 +256,12 @@ Before handing it over, read it against these and fix what fails:
 - **Every refused sentence has a replacement sentence.** Not a caveat. A sentence.
 - **The inventory reconciles.** The counts in the frame equal the cards on the page.
 - **The roll-up covers every policy change exactly once.**
+- **A document number is a citation, not a measurement — and only if the docket declares it.**
+  `Written into` names its document by section, so DoDI 5000.97 and DFARS 227 belong in the
+  prose. The gate exempts a numeral that reads as a citation *and* whose exact instrument
+  appears in the mandate docket, which means you may cite only what your docket names. An
+  instrument the docket does not carry is caught, and so is a measurement that happens to
+  follow a capitalized word.
 - **Nothing in the file is a number you invented.** Measured, quoted with attribution, or absent.
 
 ## A skeleton

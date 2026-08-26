@@ -26,6 +26,17 @@ The gallery itself is a working repo, but the plugin it compiles into is version
   `chartdata.json`**. That last one is an error here where `/datastorm`'s verifier warns: a
   policy change priced with a number nobody computed is the failure this genre dies of. A
   missing mandate docket is a hard error rather than a skipped check.
+- **A citation exemption in the redline numeral gate, earned by the skill's first real run.**
+  `Written into` names its document by section, so `DoDI 5000.97` is that field's ordinary
+  content, and the gate was flagging it as an uncomputed figure. The exemption is narrow in both
+  directions: a numeral passes only if it reads syntactically as a citation **and** the mandate
+  docket declares that exact instrument. An undeclared instrument is still caught, and so is a
+  measurement that happens to follow a capitalized word — so a hole became a check, and you may
+  cite only what your docket names.
+- **`/redline` step 7 now warns that convergence can be manufactured.** Two changes routed to
+  "the guidance" merge into one roll-up row and read as agreement when neither was aimed. No
+  check can see it — both entries are complete and the count reconciles — so the skill says to
+  check it by hand.
 - **Sixteen broken fixtures and 24 tests**, one deliberate mutation per check class, mirroring
   `verify.test.ts` and `report.test.ts`. A verifier that cannot discriminate is worse than none,
   because it is believed.

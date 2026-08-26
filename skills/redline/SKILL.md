@@ -159,6 +159,13 @@ the findings above it. Fifteen changes landing on four artifacts, nine of them o
 report arguing the recipient should write one thing. Non-convergence is also a finding and gets
 said out loud rather than hidden.
 
+**Convergence is only real if the `Written into` fields underneath it are specific.** Two changes
+routed to "the guidance" collapse into one row and read as agreement, when what happened is that
+neither was aimed. The verifier cannot see this — both entries are complete, both name a
+document, and the count reconciles — so check it by hand: if two rows merged, ask whether the
+second change really lands on the first one's artifact, or whether you stopped looking once a
+plausible document was named.
+
 Then close the inventory. Every measurement the report touched is placed in exactly one bucket
 — finding, context, drawn to be struck, held in reserve, declined — and the frame states the
 counts. **This is mechanical rather than authored**, because the option list you ingested in
@@ -201,7 +208,8 @@ this genre dies of.
 - **Measured, quoted, or absent.** Every number came from the data, came from a cited document
   with attribution, or is not in the report. Never a plausible-looking third thing.
 - **Nothing reaches the page except through `chartdata.json`.** Re-query freely; write the
-  result down first.
+  result down first. The one exemption is a document number the mandate docket declares —
+  a citation is not a measurement, and citing an instrument no docket names is caught.
 - **A finding that reaches no seat is context.** Demote it, count it in the inventory, and say
   which seat it would have needed. Do not delete it and do not invent a seat for it.
 - **Every policy change names a document.** "Someone should" is not a policy change. If no

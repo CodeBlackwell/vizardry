@@ -9,7 +9,7 @@
     ".github/verify-manifest.mjs": "cf1b73cfaa5096fd",
     ".github/workflows/ci.yml": "fd3298e810cdb1f0",
     ".gitignore": "008516bb61b96fcc",
-    "CHANGELOG.md": "ad0aeb545cd7d409",
+    "CHANGELOG.md": "b28832249c4984ea",
     "LICENSE": "7bc91f3b9cd4bf97",
     "package.json": "508e8e995da43e25",
     "README.md": "bf07599e337e3ad5",
@@ -254,10 +254,10 @@
     "skills/datastorm/SKILL.md": "1ae23cb0af95a9f9",
     "skills/mandate-docket/references/mandate-format.md": "3c656d38c1723577",
     "skills/mandate-docket/SKILL.md": "0df02df9e05d2c40",
-    "skills/redline/bin/verify-redline.mjs": "787edb49ea1b00d1",
+    "skills/redline/bin/verify-redline.mjs": "5105168d36a5f93a",
     "skills/redline/references/inefficiency-shapes.md": "a8c9cab4712f3fa9",
-    "skills/redline/references/redline-format.md": "360e53959e9a809b",
-    "skills/redline/SKILL.md": "cc42c54f0a05d4f3",
+    "skills/redline/references/redline-format.md": "f8f658ce293df66f",
+    "skills/redline/SKILL.md": "8d0f5a0bae8661f6",
     "skills/stormclips/assets/capture-clips.mjs": "71dad89db7baf705",
     "skills/stormclips/SKILL.md": "996a6a1cd9a2b6c2"
   }

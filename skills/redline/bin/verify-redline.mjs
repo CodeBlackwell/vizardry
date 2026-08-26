@@ -142,7 +142,10 @@ const numeralsIn = (text) => {
   // The lookbehind is doing real work: it keeps `F1`, `opt-a2` and the `08`/`25` of an ISO
   // date out of the gate, so an address and a datestamp are not mistaken for measurements.
   const re = /(?<![A-Za-z0-9_-])\$?\d[\d,]*(?:\.\d+)?\s*(?:%|[kKmMbB]\b)?/g;
-  for (const raw of String(text).match(re) ?? []) {
+  const source = String(text);
+  for (const match of source.matchAll(re)) {
+    const raw = match[0];
+    if (isCitation(source, raw, match.index)) continue;
     const digits = raw.replace(/[$,\s]/g, '');
     const suffix = /[kKmMbB%]$/.exec(digits)?.[0]?.toLowerCase();
     const n = Number(digits.replace(/[kKmMbB%]$/, ''));
@@ -153,6 +156,23 @@ const numeralsIn = (text) => {
   }
   return found;
 };
+// A citation is not a measurement. `Written into` names a document by section, so the field the
+// format leans on hardest is the one most likely to carry DoDI 5000.97 or DFARS 227 — and a gate
+// that cannot tell those from a number is a gate the format cannot live with. The exemption is
+// deliberately narrow in both directions: the numeral must read syntactically as a citation (an
+// identifier-shaped token in front of it), AND that exact pair must appear in the mandate docket.
+// So a declared instrument passes, an invented one does not, and `Navy 0` is still a measurement
+// because no docket declares it. The second half turns a hole into a check: you may only cite a
+// document your mandate names.
+const citations = new Set();
+for (const [, token, num] of mandate.matchAll(/\b([A-Z][A-Za-z]*(?:-[A-Z]+)*)\s+(\d[\d.]*)/g)) {
+  citations.add(`${token} ${num}`);
+}
+const isCitation = (text, raw, index) => {
+  const before = /([A-Z][A-Za-z]*(?:-[A-Z]+)*)\s*$/.exec(text.slice(0, index));
+  return !!before && citations.has(`${before[1]} ${raw.trim()}`);
+};
+
 const proseOf = (entry) => [
   entry.headline, entry.magnitude, entry.tasker, entry.killsIt,
   entry.policyChange?.downstream, entry.policyChange?.writtenInto, entry.reading, entry.strike,
