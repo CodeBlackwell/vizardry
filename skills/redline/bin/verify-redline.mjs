@@ -145,11 +145,14 @@ const SCALES = { k: 1e3, m: 1e6, b: 1e9, '%': 1 };
 /** Every numeral in a prose string, normalized to the forms the allowlist holds. */
 const numeralsIn = (text) => {
   const found = [];
-  // The lookbehind is doing real work: it keeps `F1`, `opt-a2` and the `08`/`25` of an ISO
-  // date out of the gate, so an address and a datestamp are not mistaken for measurements.
+  // The lookbehinds are doing real work: they keep `F1`, `opt-a2`, the `08`/`25` of an ISO date
+  // and the `963` of `MIL-STD-963` out of the gate, so an address, a datestamp and an instrument
+  // name are not mistaken for measurements. The hyphen is only disqualifying when it sits inside
+  // an identifier -- after a space it is a minus sign, and `-1,204` must look up as its own
+  // magnitude rather than as the `204` a blanket hyphen exclusion would leave behind.
   // Thousands groups are exactly three digits, which is what keeps a trailing comma out of the
   // match: `DFARS 227,` must look up as `DFARS 227` or the exemption fails on punctuation alone.
-  const re = /(?<![A-Za-z0-9_-])\$?\d+(?:,\d{3})*(?:\.\d+)?\s*(?:%|[kKmMbB]\b)?/g;
+  const re = /(?<![A-Za-z0-9_])(?<![A-Za-z0-9]-)\$?\d+(?:,\d{3})*(?:\.\d+)?\s*(?:%|[kKmMbB]\b)?/g;
   const source = String(text);
   for (const match of source.matchAll(re)) {
     const raw = match[0];
