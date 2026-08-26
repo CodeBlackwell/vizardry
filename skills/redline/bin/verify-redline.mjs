@@ -35,7 +35,7 @@ const POSTURES = new Set(['standard', 'actor']);
 const PROVENANCE = new Set(['raw', 'derived', 'model-judged']);
 const LABELS = new Set(['exact', 'estimated']);
 /** The ten card fields, in the four groups the format doc teaches them in. */
-const FIELDS = ['headline', 'magnitude', 'chart', 'shape', 'posture', 'seat', 'tasker',
+const FIELDS = ['headline', 'magnitude', 'chart', 'shape', 'posture', 'whoActs', 'tasker',
   'killsIt', 'provenance', 'policyChange'];
 
 const args = process.argv.slice(2);
@@ -107,6 +107,7 @@ const reserve = redline.reserve ?? [];
 const declined = redline.declined ?? [];
 const refusals = redline.refusals ?? [];
 const rollup = redline.rollup ?? [];
+const seats = redline.seats ?? [];
 const frame = redline.frame ?? {};
 
 const checks = [];
@@ -181,7 +182,9 @@ const isCitation = (text, raw, index) => {
 };
 
 const proseOf = (entry) => [
-  entry.headline, entry.magnitude, entry.tasker, entry.killsIt,
+  entry.headline, entry.magnitude, entry.killsIt,
+  ...(entry.whoActs ?? []).map((w) => w.reason),
+  ...(entry.tasker?.steps ?? []), entry.tasker?.produces, entry.policyChange?.basis,
   entry.policyChange?.downstream, entry.policyChange?.writtenInto, entry.reading, entry.strike,
   entry.wrong, entry.instead, entry.reason
 ].filter(Boolean).join(' ');
@@ -220,6 +223,8 @@ const changeGaps = findings.flatMap((f) => {
   if (!pc.owner) gaps.push(`${f.id}: policy change has no Owner`);
   if (!pc.writtenInto) gaps.push(`${f.id}: policy change has no Written into`);
   if (!pc.downstream) gaps.push(`${f.id}: policy change has no Downstream`);
+  if (!pc.basis) gaps.push(`${f.id}: Downstream has no basis — name the projection it came from, ` +
+    'so a reader can reject the projection instead of the report');
   return gaps;
 });
 check('policy-change-complete', changeGaps.length === 0, changeGaps.length ? changeGaps :
@@ -232,13 +237,58 @@ check('downstream-labelled', unlabelled.length === 0, unlabelled.length ? unlabe
     'most of them are not']);
 
 // --- routing ------------------------------------------------------------------------------
-const seatsInDocket = new Set((mandate.match(/\bS\d+\b/g) ?? []));
-const seatsUsed = [...new Set(findings.flatMap((f) => [f.seat, f.policyChange?.owner]).filter(Boolean))];
+const seatsInDocket = new Set([...mandate.matchAll(/\*\*([A-Z][A-Z0-9]{0,7})\.\s/g)].map((m) => m[1]));
+const rosterCodes = new Set(seats.map((s) => s.code).filter(Boolean));
+// Owner is prose — "STD, which signs the notice and imposes it" — so the code is read off the
+// front. Requiring it there is the discipline: the seat leads, the caveat follows.
+const ownerCode = (owner) => /^([A-Z][A-Z0-9]{0,7})\b/.exec(String(owner ?? ''))?.[1];
+const seatsUsed = [...new Set(findings.flatMap(
+  (f) => [...(f.whoActs ?? []).map((w) => w.code), ownerCode(f.policyChange?.owner)]).filter(Boolean))];
+const ownerless = findings.filter((f) => f.policyChange?.owner && !ownerCode(f.policyChange.owner))
+  .map((f) => `${f.id}: Owner does not begin with a seat code`);
 const unresolved = seatsUsed.filter((s) => !seatsInDocket.has(s));
 check('seat-resolves', unresolved.length === 0,
   unresolved.length ? unresolved.map((s) => `${s} is in no mandate docket entry`)
     .concat(`docket holds: ${[...seatsInDocket].sort().join(', ') || '(none)'}`)
     : [`every seat resolves against ${mandatePath}`]);
+
+// Both directions, because the roster is what makes a code readable where the reader is: a code
+// on a card with no roster entry is unreadable, and a roster entry no card uses is an org chart.
+const rosterGaps = [
+  ...seats.filter((s) => !s.code || !s.title || !s.decides)
+    .map((s) => `roster entry ${s.code ?? '(no code)'} needs code, title and decides`),
+  ...ownerless,
+  ...seatsUsed.filter((s) => !rosterCodes.has(s)).map((s) => `${s} is cited but has no roster card`),
+  ...[...rosterCodes].filter((s) => !seatsUsed.includes(s))
+    .map((s) => `${s} has a roster card no finding uses`)
+];
+check('seat-roster', seats.length > 0 && rosterGaps.length === 0,
+  seats.length === 0 ? ['no `seats` roster — a reader meeting a code mid-card has nowhere to ' +
+    'resolve it without leaving the page, which is what the roster exists to prevent']
+    : rosterGaps.length ? rosterGaps : [`${seats.length} seats, every code cited and every one carded`]);
+
+// A finding that reaches three seats for one reason reached one seat.
+const actGaps = findings.flatMap((f) => {
+  const acts = f.whoActs ?? [];
+  if (!acts.length) return [`${f.id}: whoActs is empty — a finding reaching no seat is context`];
+  const bad = acts.filter((w) => !w.code || !w.reason).map(() => `${f.id}: a whoActs entry lacks code or reason`);
+  const reasons = acts.map((w) => (w.reason ?? '').trim());
+  const dup = new Set(reasons).size !== reasons.length
+    ? [`${f.id}: two seats carry the same reason, so neither was read for its own decision`] : [];
+  return [...bad, ...dup];
+});
+check('who-acts', actGaps.length === 0, actGaps.length ? actGaps :
+  ['every finding names each seat it reaches with the reason it matters to that seat']);
+
+const taskerGaps = findings.flatMap((f) => {
+  const t = f.tasker ?? {};
+  const gaps = [];
+  if (!Array.isArray(t.steps) || !t.steps.length) gaps.push(`${f.id}: tasker has no numbered steps`);
+  if (!t.produces) gaps.push(`${f.id}: tasker names no artifact it produces`);
+  return gaps;
+});
+check('tasker-produces', taskerGaps.length === 0, taskerGaps.length ? taskerGaps :
+  ['steps a person could execute on Monday, and the artifact at the end of them']);
 
 const chartKeys = new Set(Object.keys(data));
 const missingCharts = [...findings, ...struck].filter((f) => f.chart && !chartKeys.has(f.chart))

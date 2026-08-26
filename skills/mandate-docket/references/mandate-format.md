@@ -130,7 +130,14 @@ opportunity.
 
 ## Seats that can impose
 
-Numbered `S1`, `S2`, ... Same address discipline. The address space is **shared across both seat
+**Seats take a mnemonic, not a serial number** — `CMP` for competition, `STD` for standard
+language, `GOV` for data governance, `DIR` for the seat that signs. A downstream document tags
+findings with these codes, and a reader meeting `CMP` mid-card can guess it where a reader
+meeting `S2` must stop and look it up. Two to four letters, never reused, and never renumbered.
+Directives and artifacts keep `D1` and `A1`, because those are cited in bibliographies rather
+than tagged on cards.
+
+Same address discipline otherwise. The address space is **shared across both seat
 buckets** and assigned in order of discovery, so `S3` may sit above `S2` in the file; that is
 correct and is what keeps a citation stable when a seat is later reclassified.
 

@@ -70,6 +70,24 @@ The gallery itself is a working repo, but the plugin it compiles into is version
   because it is believed.
 
 ### Changed
+- **`/redline`'s routing rebuilt against the reference artifact it was modelled on.** Reviewing a
+  built page against the ASEA read exposed three gaps, all in the same place — the card was
+  unreadable exactly where a reader stands.
+  - **Seats are mnemonics now, not serial numbers.** `CMP`, `STD`, `GOV` — a reader meeting `CMP`
+    mid-card can guess it; `S2` sends them to a lookup nobody performs. `/mandate-docket` assigns
+    them; directives and artifacts keep `D1` and `A1`, since those are cited rather than tagged.
+  - **A new section, *Where these land*, and it goes before the findings.** One card per seat:
+    code, title, and the one decision it owns. The gate checks both directions — a code with no
+    card is unreadable, a card no finding uses is an org chart drawn by an outsider.
+  - **`Seat` became `Who acts`, and it is plural.** One finding lands on three desks for three
+    different reasons, and one seat where three were reachable is a finding routed at a third of
+    its strength. Two seats carrying the same sentence fails: neither desk was read.
+  - **The Tasker is numbered steps plus what it produces**, not a prose paragraph of intent.
+  - **The Downstream is a comparison and carries its basis.** Recurring cost against the exposure
+    it makes visible, in one sentence, with the projection stated in the label line so a reader
+    can reject the projection instead of the report.
+  - Three new checks (`seat-roster`, `who-acts`, `tasker-produces`), 24 broken fixtures, 38 tests.
+
 - **The gallery README, rewritten.** It still described the repo as an LLM training dataset with
   a Docker quickstart, and mentioned none of the seven skills, the exemplars, the verifiers, the
   plugin, or `vizardry` — it predated the whole skill architecture. It now says what the repo is,

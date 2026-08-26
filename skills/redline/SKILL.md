@@ -130,6 +130,19 @@ seat owns. Cannot name both, it does not stay a finding:
 Never invent a seat to save a candidate. A finding routed to a job title that has no docket
 entry behind it is routed to nobody, and the verifier fails it.
 
+**Name every seat the finding reaches, each with the reason it matters to that seat.** One
+finding often lands on three desks for three different reasons: the seat that signs cares that it
+needs no instrument machinery to be true, the seat that owns the words cares which words change,
+the seat carrying it to a program cares what it means for a schedule. One seat where three were
+reachable is a finding routed at a third of its strength — and the same sentence pasted under two
+codes means neither desk was actually read. The gate checks both.
+
+**Build the roster as you go.** Every code you use gets a card in *Where these land*: the code,
+the title, and one sentence on what it decides. That section goes before the findings, not after
+them, because a reader meets the code on the first card. State on it that the codes are a reading
+aid for this document and nothing more — the recipient knows its own structure, and a roster that
+reads as an outsider's org chart spends the recipient's attention on correcting your boxes.
+
 **Set `Posture` here, honestly.** A finding that targets how a rule is written is `standard`. A
 finding that targets who is behaving badly is `actor`. Both are legitimate; the label is what
 stops the second kind accumulating unnoticed. A report whose findings are all `actor` has found
@@ -236,6 +249,12 @@ this genre dies of.
 - **Nothing reaches the page except through `chartdata.json`.** Re-query freely; write the
   result down first. The one exemption is a document number the mandate docket declares —
   a citation is not a measurement, and citing an instrument no docket names is caught.
+- **The Downstream is a comparison, not a figure.** Recurring cost on one side, the exposure it
+  makes visible on the other, in one sentence, and let the asymmetry argue: *twenty-five short
+  memos a year is the entire cost of making a $647.2M pattern visible at award time.* State only
+  the benefit and you are asking for a blank cheque; state only the cost and you are arguing
+  against yourself. Its label carries the basis, so a reader can reject your projection instead
+  of your report.
 - **A finding that reaches no seat is context.** Demote it, count it in the inventory, and say
   which seat it would have needed. Do not delete it and do not invent a seat for it.
 - **Every policy change names a document.** "Someone should" is not a policy change. If no

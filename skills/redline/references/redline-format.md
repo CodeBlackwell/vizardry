@@ -11,13 +11,14 @@ card missing one is a card the gate rejects.
 and the denominators. Every count here is checked against the cards below.>
 
 ## What every figure stands on
+## Where these land
 ## The findings
 ## Context
 ## Drawn to be struck
 ## The refusals
 ## Considered and declined
 ## What this data must refuse
-## Where the changes land
+## The documents these rewrite
 ## The mandate this stands on
 ```
 
@@ -63,6 +64,29 @@ The short list that binds the whole report, stated once so no card restates it. 
 - **The snapshot date.** Every figure is true of the data as it stood on a date. Say the date
   once here rather than in each card.
 
+## Where these land
+
+**The seat roster, and it goes before the findings rather than after them.** A reader meets `CMP`
+on the first card; the roster is what makes that legible without leaving the page. Put it early,
+render it as a grid of small cards, and give the section a subtitle that says how many seats and
+what the list is not — *six seats, not an org chart*.
+
+One card per seat: the **code**, the **title**, and one sentence on **what it decides**. Not its
+reporting line, not its parent organization, not its staff. A seat earns a card by owning a
+decision a finding can land on.
+
+> **CMP** — Competition and acquisition. Turns FPDS posture into questions a contracting
+> activity can answer.
+
+**Say out loud that the codes are a reading aid.** One line under the heading: *findings are
+tagged with the seats they reach; the tags are a reading aid for this document and nothing more,
+and the recipient knows its own structure.* Without that line a roster reads as an org chart
+drawn by an outsider, which is both wrong and insulting — and the recipient will spend its
+attention correcting your boxes instead of reading your findings.
+
+Every code used on any card appears here, and no code appears here that no card uses. The gate
+checks both directions.
+
 ## The findings
 
 Numbered `F1`, `F2`, ... **Numbers are addresses other documents cite, so they are never reused
@@ -85,8 +109,13 @@ each group answers one question.
 | field | what it holds | what fails |
 |---|---|---|
 | **Posture** | `standard` or `actor`: does this target how a rule is written, or who is behaving badly | omitting it, which is how a report drifts into ranking parties nobody meant to rank |
-| **Seat** | the address from the mandate docket, `S1`, `S4` | a seat invented for this finding, or a job title with no docket entry behind it |
-| **Tasker** | what the seat is asked to do, and **what that produces** | a task with no artifact at the end of it |
+| **Who acts** | **every** seat this finding reaches, each with the reason it matters *to that seat* — one line each. A finding that reaches three seats for three different reasons is routed three times, not once | one seat when more were reachable, or the same sentence repeated under two codes, which means neither was read |
+| **Tasker** | numbered steps, then **What it produces** on its own line. Steps are imperatives a person could execute on Monday | a prose paragraph describing an intention, or a task with no artifact at the end of it |
+
+**Addresses are mnemonics, not serial numbers.** `CMP` for competition, `STD` for standard
+language, `GOV` for data governance — a reader meeting `CMP` mid-card can guess it, and a reader
+meeting `S2` cannot. Sequential codes push the whole meaning of the routing into a lookup nobody
+performs, which is how a card stops being readable where the reader actually is.
 
 **The honesty** — what would make this wrong.
 
@@ -99,19 +128,47 @@ each group answers one question.
 
 | field | what it holds | what fails |
 |---|---|---|
-| **Policy change** | three sub-fields, all three required: **Owner** (the seat that signs), **Written into** (the named document, by section where one exists), **Downstream** (the consequence, labelled `exact` or `estimated`) | "someone should" — a change with no document is advice, and a downstream with no label is a number nobody can check |
+| **Policy change** | four sub-fields, all required: **Owner** (the seat that signs, and whether it imposes or recommends), **Written into** (the named document, by section where one exists), **Downstream** (the consequence, labelled `exact` or `estimated`), and the Downstream's **basis** — the projection it came from, stated in the label line | "someone should" — a change with no document is advice, and a downstream with no label is a number nobody can check |
+
+**The Downstream is the punch, and it is a comparison rather than a number.** A figure alone
+lands as trivia. What lands is the cost set against what the cost buys, in one sentence:
+*twenty-five short memos a year is the entire cost of making a $647.2M pattern visible at award
+time rather than two years later.* Write the recurring effort on one side, the exposure it makes
+visible on the other, and let the asymmetry do the arguing. A Downstream that states only the
+benefit is asking for a blank cheque; one that states only the cost is arguing against itself.
+
+**Its label line carries the basis.** Not `estimated` alone but `estimated, rate projected from
+46 keys in 22.3 months` — the reader can then reject your projection instead of rejecting your
+report. This is the single field most likely to be quoted out of the document, so it travels with
+the thing that would falsify it.
 
 A worked card:
 
 > **F4. Full and open competition drew one offer on a quarter of these awards.**
 > Magnitude: 61 of 237 awards, 25.7%, over the competed denominator, measured 2026-08-25.
-> Chart: `opt-c3`. Shape: outcome contradicting posture. Posture: standard. Seat: S2.
-> Tasker: the competition advocate's annual report already covers task orders above a
-> threshold; extend its coverage note to single-offer awards under full and open procedures,
-> which produces a count nobody currently publishes. Kills it: "a quarter of competitions were
-> rigged." Provenance: raw. **Policy change** — Owner: S2. Written into: the annual competition
-> advocate report, the coverage paragraph. Downstream: about 25 awards a year carrying roughly
-> $348M, `estimated` from the three-year mean.
+> Chart: `opt-c3`. Shape: outcome contradicting posture. Posture: standard. Provenance: raw.
+>
+> **Who acts.**
+> `CMP` — 61 awards is a nameable list, and nothing in it depends on a classifier.
+> `DIR` — the finding to lead with, precisely because it needs no instrument machinery to be true.
+>
+> **Tasker.** 01 Name the 61 awards. 02 Send each to the competition advocate with one question:
+> what did market research predict, and what did the debrief show. 03 Report dollars and counts,
+> never a percentage of awards.
+> **What it produces.** Sixty-one answered files, and a documented reason for each large
+> competition the market did not answer. Neither exists today.
+>
+> **Kills it:** "a quarter of competitions were rigged."
+>
+> **The policy change.** Above a stated dollar threshold, a full and open solicitation returning
+> a single offer files a short written comparison of what market research predicted against what
+> arrived, attached to the award.
+> Owner: `CMP`, which recommends the record and does not impose it.
+> Written into: the annual competition advocate report, the coverage paragraph.
+> Downstream — *estimated, rate projected from 61 awards in 22.3 months*: the record attaches to
+> about 25 awards a year carrying roughly $348M. **Twenty-five short memos a year is the entire
+> cost of making a $348M pattern visible at award time rather than two years later in an
+> analysis like this one.**
 
 **Posture is not decoration and the gate reads it.** A finding marked `actor` names a party, and
 a party can be wrong about being named in a way an office cannot be wrong about owning a
@@ -189,7 +246,7 @@ Three or four is usually right. Each names the question, the surface that would 
 whether that surface is obtainable. A question whose surface is one query away is not a refusal,
 it is a next step, and it belongs in the roll-up as one.
 
-## Where the changes land
+## The documents these rewrite
 
 **The payload.** A table grouping every policy change by the document it is written into.
 
@@ -231,14 +288,18 @@ that scrapes prose can be satisfied by prose.
 | `declined` | `id`, `reason` — never empty |
 | `refusals` | `wrong` and `instead`, both required |
 | `rollup` | `document`, `owner`, and `findings`, the ids that document absorbs |
+| `seats` | the roster: one entry per seat with `code`, `title`, `decides`. Every code any card cites appears here |
 | `standsOn` | what every figure stands on: the surfaces, the denominators, the frame |
 | `mustRefuse` | the standing refusals — what this data may never be asked, independent of any finding |
 | `mandate` | the bibliography: the seats cited by address and title, the directives by section |
 | `rollupThesis` | the one sentence the roll-up table argues, convergence or its absence |
 
 A finding carries an `id` plus the ten fields: `headline`, `magnitude`, `chart`, `shape`,
-`posture`, `seat`, `tasker`, `killsIt`, `provenance`, and `policyChange` — whose own keys are
-`owner`, `writtenInto`, `downstream` and `label`.
+`posture`, `whoActs`, `tasker`, `killsIt`, `provenance`, and `policyChange`.
+
+`whoActs` is an array of `{ code, reason }`, one per seat the finding reaches. `tasker` is
+`{ steps: [...], produces }`. `policyChange` carries `owner`, `writtenInto`, `downstream`,
+`label`, and `basis` — the projection the downstream came from, which renders in the label line.
 
 `frame.inventory` holds the five counts under exactly those bucket names, because the gate
 compares each against the entries actually present. `chart` names a top-level key of
@@ -334,7 +395,7 @@ complexity tier that produces every duration above 90 days, so the chart ranks c
 - **Whether faster review produces worse buildings.** No outcome surface exists; it would need
   the inspection record joined on permit id, which is not currently linked.
 
-## Where the changes land
+## The documents these rewrite
 
 | document | owner | changes | findings |
 |---|---|---|---|
