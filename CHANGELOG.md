@@ -8,6 +8,17 @@ The gallery itself is a working repo, but the plugin it compiles into is version
 ## Unreleased
 
 ### Added
+- **Four checks on `/redline`'s routing contract, each for a defect that was exactly
+  detectable and going undetected.** `seat-codes-mnemonic` rejects `S1`, because a serial code
+  is well formed and unreadable — it is the defect that produced an unreadable `Owner: S2` on a
+  real read. `seat-resolves` now parses the docket's three namespaces by heading, so a finding
+  addressed to a directive or an owed artifact no longer resolves as though a document could be
+  told to act. `roster-decides-distinct` rejects two seats that decide the same thing.
+  `tasker-substance` is split from `tasker-produces` because presence and substance are separate
+  claims: a tasker whose every step is the literal `x` satisfied the presence check.
+- **`redline/fixtures/build-fixtures.mjs`**, so the 28 broken fixtures are generated rather than
+  hand-kept. Each is one mutation of the passing fixture, `--check` fails on drift, and a test
+  runs it. Hand-edited, the set quietly stops meaning "exactly one thing differs."
 - **`/redline`**, a seventh skill that runs downstream of a built `/datastorm` report and turns
   its aggregates into policy changes routed to named seats. The unit is not a chart option but
   a change: each finding carries the document it is written into, the office that signs it, a
@@ -134,6 +145,30 @@ The gallery itself is a working repo, but the plugin it compiles into is version
   data sits in, the name carries it. Renaming after delivery costs a rebuild and a republish.
 
 ### Fixed
+- **The passing redline fixture stuttered its own label line, and the gate could not see it.**
+  `basis` repeated the word `label` already holds — `label: "exact"` beside
+  `basis: "exact, counted over the 22 months"` — so a page composing `*{label}, {basis}*` reads
+  *exact, exact, counted over the 22 months*. New check `basis-renders-clean`. The defect was in
+  the certified-good fixture, the worked example in the format doc, and every cold eval run,
+  which is what an unexemplified rule produces.
+- **The format doc's own skeleton card taught four of the defects this gate now rejects**: a
+  singular serial `Seat: S1`, a prose tasker, and a bare-figure `Downstream: 5 of 22 months`
+  carrying no basis at all. It was also the doc's most skimmable example, and the easiest thing
+  to imitate is what gets imitated. Rewritten against the rules it illustrates, and given the
+  seat roster it was missing.
+- **A broken fixture could trip three checks and still pass its test.** The suite asserted the
+  expected check failed, not that it was the only one, so a fixture migration that forgot to
+  regenerate the set would leave every test green while every fixture was silently multi-broken.
+  It now asserts the exact failure set, which surfaced three fixtures that were proving less
+  than they claimed — one gratuitously, and it was retargeted.
+- **The numeral gate resolved the wrong number after a minus sign.** `verify-redline.mjs`
+  excluded every digit preceded by a hyphen, which is right for `MIL-STD-963` and wrong for
+  `-1,204`: the exclusion ate the sign and the leading digits, so the gate looked up `204`
+  against `chartdata.json` instead. A figure nobody computed could pass on a plausible tail,
+  and a computed figure could fail against a number it does not contain. The rule is now two
+  lookbehinds — a hyphen between alphanumerics belongs to an identifier and still disqualifies,
+  a hyphen after whitespace is a minus sign and the magnitude behind it is scanned. Surfaced by
+  a cold eval agent reading the regex, and reproduced before it was changed.
 - **`keys-declared` was unsatisfiable for any spec that declared `meta`, and it cost a real run
   five finished charts.** `verify-option.mjs` stripped `meta` from the recorded reads before
   *both* adherence comparisons, so a spec naming it could never satisfy the check: the chart

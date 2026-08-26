@@ -239,8 +239,39 @@ check('downstream-labelled', unlabelled.length === 0, unlabelled.length ? unlabe
   ['every Downstream is exact or estimated — an unlabelled magnitude is read as exact, and ' +
     'most of them are not']);
 
+// The label line renders as `*{label}, {basis}*`, so a basis that opens with the label word
+// stutters: `*exact, exact, counted over the 22 months*`. The basis is the projection only.
+const stutter = findings.filter((f) => /^\s*(exact|estimated)\b/i.test(String(f.policyChange?.basis ?? '')))
+  .map((f) => `${f.id}: basis repeats the label word — the label line composes it already`);
+check('basis-renders-clean', stutter.length === 0, stutter.length ? stutter
+  : ['every basis is the projection alone, so the composed label line reads once']);
+
 // --- routing ------------------------------------------------------------------------------
-const seatsInDocket = new Set([...mandate.matchAll(/\*\*([A-Z][A-Z0-9]{0,7})\.\s/g)].map((m) => m[1]));
+// A docket declares three kinds of address under three kinds of heading — seats, directives and
+// artifacts — and only one of them can be told to do something. Scraping the whole file flattens
+// them, so a finding addressed to `A2` (a document that is owed) resolves as cleanly as one
+// addressed to a person who signs. The headings are what separate them.
+const docketNamespaces = () => {
+  const kinds = { seat: new Set(), directive: new Set(), artifact: new Set(), other: new Set() };
+  let kind = 'other';
+  for (const part of mandate.split(/^(#{1,6} .*)$/m)) {
+    if (part.startsWith('#')) {
+      kind = /\bseats?\b/i.test(part) ? 'seat'
+        : /\bdirectives?\b/i.test(part) ? 'directive'
+          : /\bartifacts?\b/i.test(part) ? 'artifact' : 'other';
+      continue;
+    }
+    for (const [, code] of part.matchAll(/\*\*([A-Z][A-Z0-9]{0,7})\.\s/g)) kinds[kind].add(code);
+  }
+  return kinds;
+};
+const docket = docketNamespaces();
+// A docket with no headings the parse recognises still has to work: fall back to every address
+// it declares, which is the behaviour before namespaces existed.
+const named = new Set([...docket.seat, ...docket.directive, ...docket.artifact, ...docket.other]);
+const seatsInDocket = docket.seat.size ? docket.seat : named;
+const notASeat = (code) => (docket.directive.has(code) ? 'a directive'
+  : docket.artifact.has(code) ? 'an owed artifact' : null);
 const rosterCodes = new Set(seats.map((s) => s.code).filter(Boolean));
 // Owner is prose — "STD, which signs the notice and imposes it" — so the code is read off the
 // front. Requiring it there is the discipline: the seat leads, the caveat follows.
@@ -251,9 +282,19 @@ const ownerless = findings.filter((f) => f.policyChange?.owner && !ownerCode(f.p
   .map((f) => `${f.id}: Owner does not begin with a seat code`);
 const unresolved = seatsUsed.filter((s) => !seatsInDocket.has(s));
 check('seat-resolves', unresolved.length === 0,
-  unresolved.length ? unresolved.map((s) => `${s} is in no mandate docket entry`)
-    .concat(`docket holds: ${[...seatsInDocket].sort().join(', ') || '(none)'}`)
+  unresolved.length ? unresolved.map((s) => (notASeat(s)
+    ? `${s} is ${notASeat(s)}, not a seat — a document cannot be told to act, only written into`
+    : `${s} is in no mandate docket entry`))
+    .concat(`docket seats: ${[...seatsInDocket].sort().join(', ') || '(none)'}`)
     : [`every seat resolves against ${mandatePath}`]);
+
+// `S1` is a perfectly well-formed code and an unreadable address. A reader meeting it mid-card
+// has to hold a lookup table in their head; a reader meeting `STD` does not.
+const serial = [...new Set([...seatsUsed, ...rosterCodes])].filter((s) => /^S\d+$/.test(s));
+check('seat-codes-mnemonic', serial.length === 0, serial.length
+  ? serial.map((s) => `${s} is a serial number — seats are addressed by mnemonic, so a reader `
+    + 'meeting the code on a card can guess what it governs')
+  : ['seat codes are mnemonics rather than serial numbers']);
 
 // Both directions, because the roster is what makes a code readable where the reader is: a code
 // on a card with no roster entry is unreadable, and a roster entry no card uses is an org chart.
@@ -270,6 +311,14 @@ check('seat-roster', seats.length > 0 && rosterGaps.length === 0,
     'resolve it without leaving the page, which is what the roster exists to prevent']
     : rosterGaps.length ? rosterGaps : [`${seats.length} seats, every code cited and every one carded`]);
 
+// Two seats that decide the same thing are one seat written twice, and the roster stops being a
+// reading aid the moment a reader cannot tell its entries apart.
+const decisions = seats.map((s) => (s.decides ?? '').trim()).filter(Boolean);
+const repeated = [...new Set(decisions.filter((d, i) => decisions.indexOf(d) !== i))];
+check('roster-decides-distinct', repeated.length === 0, repeated.length
+  ? repeated.map((d) => `two roster entries decide the same thing: ${JSON.stringify(d.slice(0, 60))}`)
+  : ['every roster entry decides something the others do not']);
+
 // A finding that reaches three seats for one reason reached one seat.
 const actGaps = findings.flatMap((f) => {
   const acts = f.whoActs ?? [];
@@ -283,6 +332,9 @@ const actGaps = findings.flatMap((f) => {
 check('who-acts', actGaps.length === 0, actGaps.length ? actGaps :
   ['every finding names each seat it reaches with the reason it matters to that seat']);
 
+// A step is something a person could execute on Monday, so it is at minimum a sentence. The floor
+// is low on purpose: it rejects a placeholder without pretending to judge whether a step is good.
+const STEP_FLOOR = 20;
 const taskerGaps = findings.flatMap((f) => {
   const t = f.tasker ?? {};
   const gaps = [];
@@ -292,6 +344,23 @@ const taskerGaps = findings.flatMap((f) => {
 });
 check('tasker-produces', taskerGaps.length === 0, taskerGaps.length ? taskerGaps :
   ['steps a person could execute on Monday, and the artifact at the end of them']);
+
+// Presence and substance are separate claims, so they are separate checks: a tasker can carry a
+// steps array and a produces string and still say nothing, which is the shape of a filled box.
+const thinTasker = findings.flatMap((f) => {
+  const t = f.tasker ?? {};
+  const gaps = (Array.isArray(t.steps) ? t.steps : [])
+    .map((step, i) => (String(step).trim().length < STEP_FLOOR
+      ? `${f.id}: step ${i + 1} is ${JSON.stringify(step)}, which nobody can execute` : null))
+    .filter(Boolean);
+  // A `produces` restating a step names the work again rather than the artifact at the end of it.
+  if (t.produces && (t.steps ?? []).some((s) => String(s).trim() === String(t.produces).trim())) {
+    gaps.push(`${f.id}: what it produces repeats a step verbatim, so it names no artifact`);
+  }
+  return gaps;
+});
+check('tasker-substance', thinTasker.length === 0, thinTasker.length ? thinTasker :
+  [`every step clears ${STEP_FLOOR} characters and produces names something the steps do not`]);
 
 const chartKeys = new Set(Object.keys(data));
 const missingCharts = [...findings, ...struck].filter((f) => f.chart && !chartKeys.has(f.chart))

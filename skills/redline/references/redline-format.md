@@ -138,9 +138,13 @@ visible on the other, and let the asymmetry do the arguing. A Downstream that st
 benefit is asking for a blank cheque; one that states only the cost is arguing against itself.
 
 **Its label line carries the basis.** Not `estimated` alone but `estimated, rate projected from
-46 keys in 22.3 months` — the reader can then reject your projection instead of rejecting your
+61 awards in 22.3 months` — the reader can then reject your projection instead of rejecting your
 report. This is the single field most likely to be quoted out of the document, so it travels with
 the thing that would falsify it.
+
+**Write `basis` as the projection alone.** The label line is composed from `label` and `basis`, so
+a basis that opens with `exact` or `estimated` stutters — *exact, exact, counted over the 22
+months* — and `basis-renders-clean` rejects it. The word is `label`'s job; the sentence is yours.
 
 A worked card:
 
@@ -317,8 +321,15 @@ Before handing it over, read it against these and fix what fails:
   is a change with no address.
 - **Every Downstream is labelled `exact` or `estimated`.** An unlabelled magnitude is read as
   exact, and most of them are not.
-- **Every seat resolves** to an entry in the mandate docket. A seat that does not is a finding
-  routed to nobody.
+- **Every seat resolves** to a seat entry in the mandate docket — not to a directive and not to
+  an owed artifact, which the gate now tells apart by the heading they sit under. A document
+  cannot be told to act; it can only be written into.
+- **Every seat code is a mnemonic.** `STD` and not `S1`. A serial code is well formed and
+  unreadable: it makes the reader hold a lookup table to get through a card.
+- **Every roster entry decides something the others do not.** Two seats with the same `decides`
+  are one seat written twice.
+- **Every tasker step is executable and `produces` names an artifact** the steps do not already
+  name. A steps array holding `x` satisfies a presence check and nobody's Monday.
 - **Every model-judged finding appears in the frame's verification debt.** Stated once globally,
   admitted once on the card.
 - **Every refused sentence has a replacement sentence.** Not a caveat. A sentence.
@@ -357,16 +368,35 @@ filings (18,402) and reviewed filings (11,208). Figures are as of 2026-08-25.
 - **The stance.** Aggregates here are traps and singles are findings. The mean review duration
   is 31 days; one division supplies 68% of everything above 90.
 
+## Where these land
+
+Findings are tagged with the seats they reach. The tags are a reading aid for this document and
+nothing more.
+
+- **`STD`** — Director, Office of Building Standards. Signs the annual service standards notice
+  and the claim in it that has to survive being challenged.
+- **`INT`** — Chief, Intake Division. Owns the intake procedure and the complexity tier a filing
+  is assigned at the counter.
+
 ## The findings
 
 **F1. Five of the last 22 months breached the published 30-day standard.**
 Magnitude: 5 of 22 months, over reviewed filings, measured 2026-08-25. Chart: `opt-a2`.
-Shape: level break inside a smoothed window. Posture: standard. Seat: S1.
-Tasker: the annual service standards notice reports a fiscal-year mean; add the monthly
-breach count beside it, which produces a figure the fiscal-year mean currently absorbs.
+Shape: level break inside a smoothed window. Posture: standard.
+Who acts:
+- `STD` — the breach count is the figure the notice it signs currently absorbs into a mean.
+- `INT` — every breached month is a month intake set an expectation the review could not meet.
+
+Tasker:
+01 Pull the 5 breached months and the reviewed filings inside each.
+02 Add a monthly breach count to the notice beside the fiscal-year mean.
+03 Report months and counts, never a percentage of filings.
+Produces: a monthly series the fiscal-year mean currently hides.
 Kills it: "the office is missing its deadline." Provenance: derived.
-**Policy change** — Owner: S1. Written into: the annual service standards notice, the
-reporting paragraph. Downstream: 5 of 22 months, `exact`.
+**Policy change** — Owner: `STD`, which signs the notice and imposes its content.
+Written into: the annual service standards notice, the reporting paragraph.
+Downstream — *exact, counted over the 22 months in the window*: the notice carries 5 breached
+months a reader can currently only infer, and the 22-month window stops averaging them away.
 
 ## Context
 
