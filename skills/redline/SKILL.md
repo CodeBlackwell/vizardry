@@ -210,13 +210,12 @@ findings with their ten fields, the context and struck entries, the refusals, th
 and the roll-up; its shape is in `references/redline-format.md`. The page is built from it, so
 checking the data checks the page, and a field cannot be rendered without being gated.
 
-The page itself is `/datastorm`'s, unchanged: `page.html`, `chart-kit.js`, `build.mjs`,
-`validate-palette.mjs`. **The shipped `page.html` is `/datastorm`'s brainstorm shell** — its
-sections are Recommended through Rejected and its card fields are `encoding`, `exemplar`,
-`failure`, none of which a redline has. Keep its `<style>` block, its tokens, its rail and its
-card CSS; replace the body with the nine sections and the card shape in
-`references/redline-format.md`, which gives them in markdown rather than as an HTML template.
-Generate the page from `redline.json` so the two cannot drift. Do not rewrite the assembler.
+**The page is generated, not hand-built.** `assets/render.mjs` turns `redline.json` into
+`page.html` against `assets/shell.html`, and `/datastorm`'s `build.mjs` inlines d3, the chart
+runtime and the data into one self-contained file. You write `charts.js` and the palette; you do
+not write the shell, the card CSS or the section order. Where every value lands on the page is
+the selector contract in `references/redline-format.md`, and the page gate reads that contract —
+so hand-editing the built HTML is how the two stop agreeing.
 
 `build.mjs` resolves d3 from a `node_modules` above the working directory. A redline built inside
 a repo that has none — which is most of them, since dockets and corpora live in Python trees —
@@ -224,7 +223,15 @@ fails there. Point it at one, or run the assembly from a directory that has it.
 
 ```bash
 node <skill>/bin/verify-redline.mjs redline.json --data chartdata.json --mandate docs/mandate.md
+node <skill>/assets/render.mjs                 # redline.json -> page.html
+node <skill>/../datastorm/assets/build.mjs report.html
+node <skill>/bin/verify-redline-page.mjs report.html redline.json
 ```
+
+**Both gates or neither.** The data gate proves every figure in the report was computed. The page
+gate proves the page carries the figures the data holds. Each is satisfiable without the other:
+a correct `redline.json` rendered into a page that drops half of it passes the first, and a page
+faithfully rendering invented numbers passes the second.
 
 The gate is an exit code, so a FAIL is a build stop. It checks card completeness, that every
 policy change carries an Owner, a Written into and a two-sided Downstream, that every
@@ -236,6 +243,10 @@ exactly once, that the inventory counts reconcile against the cards actually pre
 That last one is the check that matters. `/datastorm`'s verifier raises it as a warning; here it
 is an error, because a policy change priced with a number nobody computed is the exact failure
 this genre dies of.
+
+The page gate then checks what no amount of correct data can guarantee: that every value reached
+the page and reached the right card, that the seat roster renders before the first code a reader
+meets, and that every chart cleared a real mark floor rather than merely drawing something.
 
 ## Rules
 

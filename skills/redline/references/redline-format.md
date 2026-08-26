@@ -291,6 +291,30 @@ Short. The seats cited, by address and title, and the directives cited, by secti
 report's bibliography and it exists so a reader can check the routing without opening the
 mandate docket. Every `S`-address used above appears here; the gate checks it.
 
+## The selector contract
+
+`redline.json` is written first and the page is generated from it by `assets/render.mjs`, so the
+page and the data cannot disagree by accident. `bin/verify-redline-page.mjs` proves they do not
+disagree on purpose either, and it can only do that if it knows where every value landed. This
+table is that interface. Change it in one place and both sides break loudly; change it in the
+renderer alone and the gate silently stops checking.
+
+| what | selector |
+|---|---|
+| a section | `<section id="frame\|stands\|seats\|findings\|context\|struck\|refusals\|declined\|must-refuse\|rollup\|mandate">` |
+| a finding card | `<article class="find" id="F1">` |
+| a scalar field | `[data-field="headline\|magnitude\|shape\|posture\|killsIt\|provenance\|owner\|writtenInto\|label\|basis\|cost\|exposure\|asymmetry\|produces\|reading\|strike\|wrong\|instead\|reason\|title\|decides\|document\|question"]` |
+| a seat, on the roster and on a card | `[data-seat="STD"]` |
+| one `whoActs` entry | `<li data-seat="INT">` inside `.who`, its reason in `[data-field="reason"]` |
+| one tasker step | `<li data-field="step">` inside `ol.tasker`, in order |
+| a chart mount | `<div class="chart" data-chart="opt-a2">` |
+| a rail link | `<a href="#F1">` inside `.rail`, its label in the last `<span>` | 
+
+**One value, one element, and nothing else in it.** A `[data-field]` element holds the value and
+no label: the word "Magnitude:" lives in a sibling. That single rule is what lets the gate compare
+page against data with string equality instead of a substring search, and a substring search is
+how a check that looks strict turns out to be satisfiable by prose.
+
 ## The data file the page is built from
 
 **Write `redline.json` first and build the page from it.** Every section above is one key, every

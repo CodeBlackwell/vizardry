@@ -8,6 +8,27 @@ The gallery itself is a working repo, but the plugin it compiles into is version
 ## Unreleased
 
 ### Added
+- **A fifth verifier, `redline/bin/verify-redline-page.mjs`, and the renderer that makes it
+  possible.** Every check the redline had read `redline.json`; none read the page. So the page
+  was trusted to have been built from the data, and in one cold eval run a struck entry's chart
+  genuinely disagreed between the two with nothing catching it. Fourteen checks now, of which the
+  load-bearing one is `page-matches-data`: every value the data holds is on the page, in the card
+  that owns it, compared as **string equality** rather than as a search — so a reworded headline,
+  a truncated magnitude or a label glued into the value's own element all fail.
+- **`/redline` ships its own page scaffolding** (`assets/shell.html`, `assets/render.mjs`). The
+  skill used to tell each run to hand-diff `/datastorm`'s brainstorm shell, whose card renders a
+  redline as ten flat rows and whose roster has no CSS at all — so every run rewrote ~60 lines of
+  it differently, and a page gate would have been verifying a hand-rolled artifact. The page is
+  generated from `redline.json` now, and **the selector contract** in `references/redline-format.md`
+  is the one place the renderer and the gate agree about where a value lands.
+- **`chart-floor` and `no-curves`.** The floor restates `MARK_FLOOR`/`PATH_DATA_FLOOR` and their
+  `||` predicate rather than importing `chartRules.ts`, which would put esbuild in this skill's
+  dependencies for two integers; a test asserts the two against each other so they cannot drift.
+  `--min-marks` may only raise it — `/datastorm`'s `--min` can be lowered, and a switch that turns
+  a check off is worth more to a report under deadline than the check is worth to anyone.
+  `no-curves` is a **warning**: the ten inefficiency shapes skew rectangular by construction, so
+  an error would fire on a correct report and the repair a writer reaches for is a decorative
+  circle.
 - **`/redline`'s Downstream is three fields rather than one sentence** — `cost`, the `exposure`
   it is set against, and the `asymmetry` sentence that weighs them. The format doc had required a
   comparison since the field existed; nothing enforced it, and both Downstreams in the repo's own
@@ -159,6 +180,13 @@ The gallery itself is a working repo, but the plugin it compiles into is version
   data sits in, the name carries it. Renaming after delivery costs a rebuild and a republish.
 
 ### Fixed
+- **The roll-up and the rail were the two values on the page nothing compared against the data.**
+  The roll-up is what the format doc calls the payload — the sentence a reader takes away is which
+  documents absorb which changes — and it was rendered without a single `data-field`, so the most
+  load-bearing section of the page was the least checked. The rail repeats every headline, which
+  makes it a second copy free to drift into saying something the card does not. Both are checked
+  now, the second by `rail-matches-data`. Found by probing the built page rather than by reading
+  the verifier.
 - **Nesting the Downstream would have taken it out of the numeral gate without failing
   anything.** `proseOf` reached for `policyChange.downstream` as a scalar; an object is truthy,
   survives the filter, and joins as `[object Object]`, which carries no digits. Probed with
