@@ -17,13 +17,19 @@
  * without one, so a verifier that passes without one would certify a report the skill would
  * not have produced.
  *
+ * `--emit` writes a per-finding evidence artifact -- the resolved seat behind every code, the
+ * chartdata path behind every figure, the refusal that answers each finding -- so a reviewer
+ * judges what this run resolved instead of re-resolving it. `--review` reads the verdicts back
+ * and turns them into one more check; without it that check does not run, which keeps a redline
+ * that was never sent for review honest about not having been.
+ *
  * The numeral check is the reason this file exists. Every number in every prose field must
  * resolve to a value in chartdata.json under some ordinary rendering of it — $1.2M for
  * 1200000, 25.7% for 0.257 or 25.7. Four-digit years are exempt because a year is a label, not
  * a measurement. Nothing else is exempt: a number that needs to be in the report needs to be in
  * the data file first, which costs one query and closes the hole permanently.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
 const SHAPES = new Set([
@@ -49,10 +55,13 @@ const flag = (name) => {
 const dataFlags = [];
 for (let next = flag('--data'); next; next = flag('--data')) dataFlags.push(next);
 const mandateFlag = flag('--mandate');
+const emitPath = flag('--emit');
+const reviewPath = flag('--review');
 const [redlinePath] = args;
 
 if (!redlinePath) {
-  console.error('usage: verify-redline.mjs <redline.json> [--data chartdata.json] [--mandate mandate.md]');
+  console.error('usage: verify-redline.mjs <redline.json> [--data chartdata.json] ' +
+    '[--mandate mandate.md] [--emit evidence.json] [--review verdicts.json]');
   process.exit(1);
 }
 if (!existsSync(redlinePath)) {
@@ -86,13 +95,13 @@ if (!mandatePath) {
 
 // Being handed the rendered page instead of the data behind it is the one mistake worth a
 // sentence rather than a stack trace, because the fix is to write a file that does not exist yet.
-const parse = (path, what) => {
+const parse = (path, what, hint = 'the gate reads the redline as data, not the rendered page — ' +
+  'write redline.json first and build the HTML from it') => {
   try {
     return JSON.parse(readFileSync(path, 'utf8'));
   } catch (error) {
     console.error(`${path} does not parse as JSON, so ${what} cannot be read: ${error.message}`);
-    console.error('the gate reads the redline as data, not the rendered page — write ' +
-      'redline.json first and build the HTML from it');
+    console.error(hint);
     process.exit(1);
   }
 };
@@ -114,32 +123,36 @@ const checks = [];
 const check = (name, ok, detail) => checks.push({ name, ok: !!ok, detail: [].concat(detail ?? []) });
 
 // --- the numeral allowlist ---------------------------------------------------------------
-// Every number anywhere in chartdata, plus the renderings a writer actually uses for it.
-const values = new Set();
-const addValue = (n) => {
+// Every number anywhere in chartdata, plus the renderings a writer actually uses for it. A Map
+// rather than a Set because each form remembers where it came from: the gate only needs `has`,
+// but `--emit` needs to tell a reviewer that 22 is `opt-a2.windowMonths` rather than merely
+// that 22 resolves. First writer wins, so a form reached by two paths reports the earlier one.
+const values = new Map();
+const addValue = (n, from) => {
   if (!Number.isFinite(n)) return;
   const forms = [n, Math.round(n), Math.abs(n)];
   for (const scale of [1, 1e-3, 1e-6, 1e-9, 100]) forms.push(n * scale);
   for (const form of forms) {
     if (!Number.isFinite(form)) continue;
-    values.add(String(form));
-    values.add(form.toFixed(0));
-    values.add(form.toFixed(1));
-    values.add(form.toFixed(2));
-    values.add(String(Math.round(form)));
+    for (const key of [String(form), form.toFixed(0), form.toFixed(1), form.toFixed(2),
+      String(Math.round(form))]) {
+      if (!values.has(key)) values.set(key, from);
+    }
   }
 };
-const walk = (node) => {
-  if (typeof node === 'number') return addValue(node);
+const walk = (node, from) => {
+  if (typeof node === 'number') return addValue(node, from);
   if (typeof node === 'string') {
     const parsed = Number(node.replace(/[$,%\s]/g, ''));
-    if (node.trim() !== '' && Number.isFinite(parsed)) addValue(parsed);
+    if (node.trim() !== '' && Number.isFinite(parsed)) addValue(parsed, from);
     return;
   }
-  if (Array.isArray(node)) return node.forEach(walk);
-  if (node && typeof node === 'object') return Object.values(node).forEach(walk);
+  if (Array.isArray(node)) return node.forEach((v, i) => walk(v, `${from}[${i}]`));
+  if (node && typeof node === 'object') {
+    return Object.entries(node).forEach(([k, v]) => walk(v, from ? `${from}.${k}` : k));
+  }
 };
-walk(data);
+walk(data, '');
 
 const SCALES = { k: 1e3, m: 1e6, b: 1e9, '%': 1 };
 /** Every numeral in a prose string, normalized to the forms the allowlist holds. */
@@ -473,6 +486,114 @@ check('numerals-in-data', strays.length === 0, strays.length
     'write the result back before writing the sentence')
   : ['every numeral resolves to a computed value']);
 
+// --- the judged half ------------------------------------------------------------------------
+// Five questions, each sitting exactly where a mechanical check stops. `who-acts` proves two
+// reasons differ as strings and cannot ask whether they differ as decisions; `asymmetry-binds`
+// proves the sentence carries both figures and cannot ask whether it trades them; `shape-known`
+// proves membership, not fit; `refusals-paired` proves the pairing, not that the sentence kills;
+// `tasker-substance` proves length and non-repetition, not that `produces` names a thing. A
+// reviewer that answered anything else would be re-running this file by hand.
+const QUESTIONS = {
+  'seat-fit': 'is each whoActs reason that seat\'s own decision, given what the roster says it decides',
+  'trade-real': 'does the asymmetry set a cost against an exposure, rather than stating a benefit twice',
+  'shape-honest': 'is the declared shape the one the magnitude actually shows',
+  'kills-it-kills': 'would the killsIt sentence end the finding, or is it a caveat it survives',
+  'produces-is-artifact': 'does produces name something that exists after the steps, not the work'
+};
+const RULINGS = new Set(['ok', 'doubt', 'fail']);
+
+// Reviews merge by finding id, and that is the whole answer to why review fans out where
+// building cannot: a finding is an object inside one shared redline.json with no fence around
+// it, but a verdict is a key each reviewer owns alone, so concurrent verdicts merge by
+// assignment. The parallel unit is the judgment, not the write.
+const doubts = [];
+if (reviewPath) {
+  const verdicts = parse(reviewPath, 'the review verdicts',
+    'verdicts are one object per finding id, merged from the reviewers; see references/review.md');
+  const gaps = [
+    ...ids.filter((id) => !verdicts[id]).map((id) => `${id} was never reviewed`),
+    ...Object.keys(verdicts).filter((id) => !ids.includes(id))
+      .map((id) => `there is a verdict for ${id}, which is not a finding`)
+  ];
+  for (const id of ids.filter((i) => verdicts[i])) {
+    for (const [q, asks] of Object.entries(QUESTIONS)) {
+      const v = verdicts[id][q];
+      if (!v) { gaps.push(`${id}: no ruling on ${q} -- ${asks}`); continue; }
+      if (!RULINGS.has(v.ruling)) gaps.push(`${id} ${q}: ruling is ${JSON.stringify(v.ruling)}, not ok/doubt/fail`);
+      if (!String(v.why ?? '').trim()) gaps.push(`${id} ${q}: ruled ${v.ruling} with no reason, which is a vote rather than a review`);
+      if (v.ruling === 'fail') gaps.push(`${id} ${q}: FAILED review -- ${v.why}`);
+      if (v.ruling === 'doubt') doubts.push(`${id} ${q}: ${v.why}`);
+    }
+  }
+  check('review-complete', gaps.length === 0, gaps.length ? gaps
+    : [`${ids.length} finding(s) reviewed on all ${Object.keys(QUESTIONS).length} judged questions`]);
+}
+
+// --- the evidence artifact ------------------------------------------------------------------
+// What a reviewer judges instead of re-deriving. Every value here is a fact this run resolved:
+// the seat behind a code, the chartdata path behind a numeral, the refusal that answers a
+// finding. That is the whole point -- a reviewer handed the source has to redo the resolution
+// before it can disagree with it, and a reviewer that redoes the resolution is a second verifier
+// rather than a second opinion.
+//
+// Deliberately absent: mark counts. Those are page facts, this gate never opens the page, and a
+// second process merging into this file would let a stale run's data facts survive a rebuild.
+// verify-redline-page.mjs prints its tally as a signal line instead.
+const figuresIn = (text) => numeralsIn(String(text ?? '')).map(({ raw, candidates }) => {
+  const form = candidates.flatMap((n) => [String(n), n.toFixed(1), n.toFixed(2)])
+    .find((k) => values.has(k));
+  return { raw: raw.trim(), value: candidates[0], source: form === undefined ? null : values.get(form) };
+});
+const withFigures = (fields) => Object.fromEntries(
+  Object.entries(fields).map(([k, v]) => [k, figuresIn(v)]).filter(([, f]) => f.length));
+
+const seatByCode = new Map(seats.filter((s) => s.code).map((s) => [s.code, s]));
+const refusalFor = (f) => refusals.find((r) => (r.wrong ?? '').trim() === (f.killsIt ?? '').trim()) ?? null;
+const rollupFor = (f) => rollup.find((r) => (r.findings ?? []).includes(f.id)) ?? null;
+
+const evidence = {
+  redline: redlinePath,
+  data: dataPaths,
+  mandate: mandatePath,
+  passed: checks.every((c) => c.ok),
+  failedChecks: checks.filter((c) => !c.ok).map((c) => c.name),
+  inventory: actual,
+  findings: findings.map((f) => {
+    const pc = f.policyChange ?? {};
+    const code = ownerCode(pc.owner);
+    return {
+      id: f.id,
+      headline: f.headline,
+      shape: f.shape,
+      posture: f.posture,
+      provenance: f.provenance,
+      chart: f.chart,
+      // Resolved, not cited: the reviewer's question is whether this reason is genuinely THIS
+      // seat's decision, and it cannot ask that while the seat is still a three-letter code.
+      seatsReached: (f.whoActs ?? []).map((w) => ({
+        code: w.code,
+        title: seatByCode.get(w.code)?.title ?? null,
+        decides: seatByCode.get(w.code)?.decides ?? null,
+        reason: w.reason
+      })),
+      owner: { code: code ?? null, title: seatByCode.get(code)?.title ?? null, prose: pc.owner },
+      writtenInto: pc.writtenInto,
+      downstream: { label: pc.label, basis: pc.basis, ...(pc.downstream ?? {}) },
+      tasker: { steps: f.tasker?.steps ?? [], produces: f.tasker?.produces },
+      killsIt: f.killsIt,
+      refusedBy: refusalFor(f),
+      rollupRow: rollupFor(f) && { document: rollupFor(f).document, owner: rollupFor(f).owner },
+      figures: withFigures({
+        headline: f.headline, magnitude: f.magnitude, killsIt: f.killsIt,
+        cost: pc.downstream?.cost, exposure: pc.downstream?.exposure,
+        asymmetry: pc.downstream?.asymmetry, basis: pc.basis, writtenInto: pc.writtenInto,
+        tasker: (f.tasker?.steps ?? []).concat(f.tasker?.produces ?? []).join(' ')
+      })
+    };
+  })
+};
+if (emitPath) writeFileSync(emitPath, `${JSON.stringify(evidence, null, 2)}\n`);
+
 console.log(`${redlinePath}  (data: ${dataPath}, mandate: ${mandatePath})`);
 let failed = false;
 for (const c of checks) {
@@ -484,6 +605,9 @@ for (const c of checks) {
 // Signals, not checks. A report that is all one posture has found a scandal rather than a policy,
 // and a report that is all one shape has found one defect described five ways — both are worth
 // knowing before it ships and neither is a reason to block a build.
+// A doubt is handed to a person, not blocked on: a reviewer who cannot tell has reported exactly
+// that, and turning uncertainty into a build stop teaches reviewers to rule `ok` when unsure.
+for (const doubt of doubts) console.log(`  signal  doubt: ${doubt}`);
 const tally = (xs) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map())]
   .sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ');
 if (findings.length) {

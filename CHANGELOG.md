@@ -8,6 +8,30 @@ The gallery itself is a working repo, but the plugin it compiles into is version
 ## Unreleased
 
 ### Added
+- **`verify-redline.mjs --emit`, and the review stage it feeds.** The gates are set operations
+  and string comparisons, which is why they are trustworthy and also where they stop: `who-acts`
+  proves two seats carry different reasons and cannot ask whether they carry different
+  *decisions*. `--emit` writes a per-finding evidence artifact of what the run **resolved** — the
+  seat behind every code together with what the roster says it decides, the chartdata path behind
+  every figure, the refusal answering the finding, the roll-up row absorbing it. A reviewer judges
+  that; a reviewer handed the sources instead re-resolves what the run already resolved, which
+  makes it a second verifier rather than a second opinion. The numeral allowlist became a Map for
+  this, so `22` reports as `opt-a2.windowMonths` rather than merely as resolving.
+- **`--review verdicts.json`, and five questions that sit exactly where a check stops.**
+  `seat-fit`, `trade-real`, `shape-honest`, `kills-it-kills`, `produces-is-artifact` — each names
+  the mechanical check it stands behind, so a reviewer can see it is not being asked to redo one.
+  A `fail` is a build stop, a `doubt` prints as a signal and does not block (blocking on
+  uncertainty teaches reviewers to rule `ok` when unsure), and a ruling with a blank `why` fails:
+  the reason is the part a person can disagree with, which is the only thing separating a review
+  from a second signature. Without the flag the check does not run — a redline that was never
+  reviewed should say so rather than showing a green gate that means something narrower than it
+  looks. `references/review.md` is the reviewer's brief.
+- **Why review fans out where building cannot.** `/datastorm-parallel` fences concurrent work by
+  file: one option, one fragment, one agent. A redline finding has no such fence — it is an object
+  inside one shared `redline.json`, and two builders editing it race. A **verdict** is a key each
+  reviewer owns alone, so concurrent verdicts merge by plain assignment in any order. The parallel
+  unit is the judgment, not the write; nothing here needs a worktree, a model ladder or a
+  conditional repair stage, because nothing here retries.
 - **A fifth verifier, `redline/bin/verify-redline-page.mjs`, and the renderer that makes it
   possible.** Every check the redline had read `redline.json`; none read the page. So the page
   was trusted to have been built from the data, and in one cold eval run a struck entry's chart

@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/build-plugin.mjs",
   "purpose": "Content hashes of every shipped file. `just check` recomputes these from the gallery and fails if they differ, because an exemplar is a copy and a copy rots silently.",
-  "count": 259,
+  "count": 260,
   "exemplars": 212,
   "sha256_16": {
     ".claude-plugin/marketplace.json": "8a499e91d48b1117",
@@ -9,7 +9,7 @@
     ".github/verify-manifest.mjs": "cf1b73cfaa5096fd",
     ".github/workflows/ci.yml": "fd3298e810cdb1f0",
     ".gitignore": "008516bb61b96fcc",
-    "CHANGELOG.md": "68be3b29db05adf5",
+    "CHANGELOG.md": "ef13be591e4ec02d",
     "LICENSE": "7bc91f3b9cd4bf97",
     "package.json": "508e8e995da43e25",
     "README.md": "badab47ebc48c848",
@@ -257,10 +257,11 @@
     "skills/redline/assets/render.mjs": "3a7ef8975e5eb868",
     "skills/redline/assets/shell.html": "b7f9bf1299bb54e3",
     "skills/redline/bin/verify-redline-page.mjs": "e0275123bdb9611d",
-    "skills/redline/bin/verify-redline.mjs": "829df0fc4e3f6d91",
+    "skills/redline/bin/verify-redline.mjs": "bb657b6be7480465",
     "skills/redline/references/inefficiency-shapes.md": "a8c9cab4712f3fa9",
     "skills/redline/references/redline-format.md": "8fb8c524d9d800aa",
-    "skills/redline/SKILL.md": "d80cbd9f1642c8ea",
+    "skills/redline/references/review.md": "4be172f6d21ec34d",
+    "skills/redline/SKILL.md": "0c8c6ac7e9220cb3",
     "skills/stormclips/assets/capture-clips.mjs": "71dad89db7baf705",
     "skills/stormclips/SKILL.md": "996a6a1cd9a2b6c2"
   }

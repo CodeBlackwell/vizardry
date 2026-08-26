@@ -248,6 +248,36 @@ The page gate then checks what no amount of correct data can guarantee: that eve
 the page and reached the right card, that the seat roster renders before the first code a reader
 meets, and that every chart cleared a real mark floor rather than merely drawing something.
 
+### 9. Review what no check can reach
+
+The gates are set operations and string comparisons. That is why they are trustworthy and also
+where they stop: `who-acts` proves two seats carry different reasons and cannot ask whether they
+carry different *decisions*. Five questions sit exactly there, and `references/review.md` is the
+reviewer's brief.
+
+```bash
+node <skill>/bin/verify-redline.mjs redline.json --data chartdata.json \
+  --mandate docs/mandate.md --emit evidence.json
+# fan out one agent per entry in evidence.findings; merge their verdicts by finding id
+node <skill>/bin/verify-redline.mjs redline.json --data chartdata.json \
+  --mandate docs/mandate.md --review verdicts.json
+```
+
+**Review fans out where building cannot.** A finding is an object inside one shared
+`redline.json` with no fence around it, so concurrent builders race. A verdict is a key each
+reviewer owns alone, so concurrent verdicts merge by assignment. The parallel unit is the
+judgment; the write stays serial and stays here.
+
+**A reviewer reads `evidence.json`, never the sources.** It carries what this run resolved — the
+seat behind each code with what the roster says it decides, the chartdata path behind each figure,
+the refusal answering each finding. Hand a reviewer `redline.json` and the docket instead and it
+re-resolves what the run already resolved, which makes it a second verifier rather than a second
+opinion. Run the `--review` pass yourself: an agent that certifies its own work has certified
+nothing.
+
+Without `--review` the check does not run. That is the point — a redline that was never reviewed
+should say so rather than showing a green gate that means something narrower than it looks.
+
 ## Rules
 
 - **No mandate docket, no run.** Not a warning, not a hypothetical mode. Point at
