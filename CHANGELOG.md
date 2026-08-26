@@ -5,7 +5,7 @@ The gallery itself is a working repo, but the plugin it compiles into is version
 `package.json` is the single source of that version and `build-plugin.mjs` stamps it into
 `plugin/.claude-plugin/plugin.json`. Entries carry both the version and the date.
 
-## Unreleased
+## 1.6.0 — 2026-08-26
 
 ### Added
 - **`verify-redline.mjs --emit`, and the review stage it feeds.** The gates are set operations
