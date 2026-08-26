@@ -69,6 +69,15 @@ The gallery itself is a working repo, but the plugin it compiles into is version
   `verify.test.ts` and `report.test.ts`. A verifier that cannot discriminate is worse than none,
   because it is believed.
 
+### Changed
+- **The gallery README, rewritten.** It still described the repo as an LLM training dataset with
+  a Docker quickstart, and mentioned none of the seven skills, the exemplars, the verifiers, the
+  plugin, or `vizardry` — it predated the whole skill architecture. It now says what the repo is,
+  which numbers to trust (`just status`, not the prose), why `just check` omits lint, and which
+  half of `src/` is legacy.
+- **The plugin README records the d3 resolution requirement**: assembling a report page needs a
+  `node_modules` above the working directory, which a Python tree does not have.
+
 ## 1.5.0 — 2026-08-24
 
 ### Added

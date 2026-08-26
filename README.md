@@ -54,6 +54,8 @@ earthquake catalog at
   directory when it is missing.
 - `/stormclips` alone needs Chrome and `ffmpeg`, and asks for them when you run it. No
   other skill uses them.
+- Assembling a report page resolves d3 from a `node_modules` above the working directory. A
+  build inside a repo that has none — a Python tree, most often — needs one pointed at it.
 - Developed on macOS, CI-verified on Linux. Windows is untested.
 
 ## Using the tools directly
