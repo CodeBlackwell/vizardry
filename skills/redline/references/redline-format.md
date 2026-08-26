@@ -128,14 +128,28 @@ performs, which is how a card stops being readable where the reader actually is.
 
 | field | what it holds | what fails |
 |---|---|---|
-| **Policy change** | four sub-fields, all required: **Owner** (the seat that signs, and whether it imposes or recommends), **Written into** (the named document, by section where one exists), **Downstream** (the consequence, labelled `exact` or `estimated`), and the Downstream's **basis** — the projection it came from, stated in the label line | "someone should" — a change with no document is advice, and a downstream with no label is a number nobody can check |
+| **Policy change** | all required: **Owner** (the seat that signs, and whether it imposes or recommends), **Written into** (the named document, by section where one exists), a three-part **Downstream** — the **cost**, the **exposure** it is set against, and the **asymmetry** sentence that weighs them — plus its **label** (`exact` or `estimated`) and its **basis**, the projection it came from | "someone should" — a change with no document is advice, a downstream with no label is a number nobody can check, and a downstream with one side is not a comparison |
 
-**The Downstream is the punch, and it is a comparison rather than a number.** A figure alone
-lands as trivia. What lands is the cost set against what the cost buys, in one sentence:
-*twenty-five short memos a year is the entire cost of making a $647.2M pattern visible at award
-time rather than two years later.* Write the recurring effort on one side, the exposure it makes
-visible on the other, and let the asymmetry do the arguing. A Downstream that states only the
-benefit is asking for a blank cheque; one that states only the cost is arguing against itself.
+**The Downstream is the punch, and it is a comparison rather than a number — so it is three
+fields rather than one sentence.** A figure alone lands as trivia. What lands is the cost set
+against what the cost buys: *twenty-five short memos a year is the entire cost of making a
+$647.2M pattern visible at award time rather than two years later.* A Downstream that states only
+the benefit is asking for a blank cheque; one that states only the cost is arguing against itself.
+
+The split exists because **no check over a single sentence can tell which side of a comparison a
+number is on.** So `cost` and `exposure` are separate fields, **each carrying a figure that was
+actually computed**, and `asymmetry` is the sentence that sets them against each other. The gate
+requires both sides to be priced, requires the two to be different figures, and requires the
+sentence to carry a figure from each — otherwise the sides are decorative.
+
+**Write `asymmetry` rather than composing it.** The clause doing the real work in the card below
+is *rather than two years later in an analysis like this one*: a counterfactual that lives in
+neither side, and that changes in kind from card to card — a time here, a threshold elsewhere, an
+audience somewhere else. A fourth field for it would be a slot for whatever was left over.
+
+**What this does not buy.** Three labelled boxes are three plausible clauses, and filling a
+labelled box plausibly is the easiest thing a writer under deadline does. The shape prevents a
+one-sided Downstream. It does not prevent an empty one, and no check here claims to.
 
 **Its label line carries the basis.** Not `estimated` alone but `estimated, rate projected from
 61 awards in 22.3 months` — the reader can then reject your projection instead of rejecting your
@@ -169,10 +183,11 @@ A worked card:
 > arrived, attached to the award.
 > Owner: `CMP`, which recommends the record and does not impose it.
 > Written into: the annual competition advocate report, the coverage paragraph.
-> Downstream — *estimated, rate projected from 61 awards in 22.3 months*: the record attaches to
-> about 25 awards a year carrying roughly $348M. **Twenty-five short memos a year is the entire
-> cost of making a $348M pattern visible at award time rather than two years later in an
-> analysis like this one.**
+> Downstream — *estimated, rate projected from 61 awards in 22.3 months*
+> Cost: 25 short memos a year, one per award the record attaches to.
+> Exposure: roughly $348M a year moving under a record nobody reads until an analysis like this.
+> **Twenty-five short memos a year is the entire cost of making a $348M pattern visible at award
+> time rather than two years later in an analysis like this one.**
 
 **Posture is not decoration and the gate reads it.** A finding marked `actor` names a party, and
 a party can be wrong about being named in a way an office cannot be wrong about owning a
@@ -302,8 +317,9 @@ A finding carries an `id` plus the ten fields: `headline`, `magnitude`, `chart`,
 `posture`, `whoActs`, `tasker`, `killsIt`, `provenance`, and `policyChange`.
 
 `whoActs` is an array of `{ code, reason }`, one per seat the finding reaches. `tasker` is
-`{ steps: [...], produces }`. `policyChange` carries `owner`, `writtenInto`, `downstream`,
-`label`, and `basis` — the projection the downstream came from, which renders in the label line.
+`{ steps: [...], produces }`. `policyChange` carries `owner`, `writtenInto`, `label`, `basis` —
+the projection the downstream came from, which renders in the label line and does not repeat the
+label word — and `downstream`, itself `{ cost, exposure, asymmetry }`.
 
 `frame.inventory` holds the five counts under exactly those bucket names, because the gate
 compares each against the entries actually present. `chart` names a top-level key of
@@ -321,6 +337,10 @@ Before handing it over, read it against these and fix what fails:
   is a change with no address.
 - **Every Downstream is labelled `exact` or `estimated`.** An unlabelled magnitude is read as
   exact, and most of them are not.
+- **Both sides of every Downstream carry a computed figure, and the two differ.** A cost priced at
+  the exposure is the same number twice, which compares nothing.
+- **Every asymmetry sentence carries a figure from each side.** Otherwise the two sides are
+  decorative and the punch is a free string.
 - **Every seat resolves** to a seat entry in the mandate docket — not to a directive and not to
   an owed artifact, which the gate now tells apart by the heading they sit under. A document
   cannot be told to act; it can only be written into.

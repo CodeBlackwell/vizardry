@@ -188,7 +188,12 @@ const proseOf = (entry) => [
   entry.headline, entry.magnitude, entry.killsIt,
   ...(entry.whoActs ?? []).map((w) => w.reason),
   ...(entry.tasker?.steps ?? []), entry.tasker?.produces, entry.policyChange?.basis,
-  entry.policyChange?.downstream, entry.policyChange?.writtenInto, entry.reading, entry.strike,
+  // Named one by one rather than spread: `downstream` is an object, and an object survives
+  // `.filter(Boolean)` to join as `[object Object]`, which carries no digits. Reaching for the
+  // whole field here would take the Downstream out of the numeral gate without failing anything.
+  entry.policyChange?.downstream?.cost, entry.policyChange?.downstream?.exposure,
+  entry.policyChange?.downstream?.asymmetry,
+  entry.policyChange?.writtenInto, entry.reading, entry.strike,
   entry.wrong, entry.instead, entry.reason
 ].filter(Boolean).join(' ');
 
@@ -225,13 +230,50 @@ const changeGaps = findings.flatMap((f) => {
   const gaps = [];
   if (!pc.owner) gaps.push(`${f.id}: policy change has no Owner`);
   if (!pc.writtenInto) gaps.push(`${f.id}: policy change has no Written into`);
-  if (!pc.downstream) gaps.push(`${f.id}: policy change has no Downstream`);
+  // Three parts, because a Downstream is a comparison and no check over one string can tell
+  // which side of it a number is on.
+  for (const part of ['cost', 'exposure', 'asymmetry']) {
+    if (!pc.downstream?.[part]) gaps.push(`${f.id}: Downstream has no ${part}`);
+  }
   if (!pc.basis) gaps.push(`${f.id}: Downstream has no basis — name the projection it came from, ` +
     'so a reader can reject the projection instead of the report');
   return gaps;
 });
 check('policy-change-complete', changeGaps.length === 0, changeGaps.length ? changeGaps :
   ['a change with no document is advice — "someone should" is not a policy change']);
+
+// Each side of the comparison has to carry a figure somebody computed, and they have to be
+// different figures — a cost priced at the exposure is not a trade, it is the same number twice.
+const priceGaps = findings.flatMap((f) => {
+  const d = f.policyChange?.downstream ?? {};
+  const sides = ['cost', 'exposure'].map((k) => ({ k, nums: numeralsIn(String(d[k] ?? '')) }));
+  const bare = sides.filter((s) => !s.nums.length)
+    .map((s) => `${f.id}: Downstream ${s.k} carries no figure — an unpriced side cannot be weighed`);
+  if (bare.length) return bare;
+  const [cost, exposure] = sides.map((s) => s.nums.map((n) => n.candidates[0]));
+  return cost.every((c) => exposure.includes(c))
+    ? [`${f.id}: Downstream cost and exposure resolve to the same figure, so nothing is compared`]
+    : [];
+});
+check('downstream-priced', priceGaps.length === 0, priceGaps.length ? priceGaps :
+  ['both sides of every Downstream carry a computed figure, and the two differ']);
+
+// Without this the two sides are decorative: the sentence that does the arguing can ignore them.
+const loose = findings.flatMap((f) => {
+  const d = f.policyChange?.downstream ?? {};
+  // Compared as resolved values, not as substrings: `includes('5')` is satisfied by the 5 inside
+  // 25, and a gate that scrapes prose can be satisfied by prose.
+  const said = new Set(numeralsIn(String(d.asymmetry ?? '')).map((n) => n.candidates[0]));
+  return ['cost', 'exposure'].flatMap((k) => {
+    const figures = numeralsIn(String(d[k] ?? ''));
+    return figures.length && !figures.some((n) => said.has(n.candidates[0]))
+      ? [`${f.id}: the asymmetry sentence carries no figure from the ${k} — `
+        + figures.map((n) => n.raw.trim()).join(', ')]
+      : [];
+  });
+});
+check('asymmetry-binds', loose.length === 0, loose.length ? loose :
+  ['every asymmetry sentence sets one side\'s figure against the other\'s']);
 
 const unlabelled = findings.filter((f) => !LABELS.has(f.policyChange?.label))
   .map((f) => `${f.id}: label is ${JSON.stringify(f.policyChange?.label)}`);

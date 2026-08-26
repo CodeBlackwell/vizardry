@@ -227,7 +227,7 @@ node <skill>/bin/verify-redline.mjs redline.json --data chartdata.json --mandate
 ```
 
 The gate is an exit code, so a FAIL is a build stop. It checks card completeness, that every
-policy change carries an Owner and a Written into, that every Downstream is labelled, that every
+policy change carries an Owner, a Written into and a two-sided Downstream, that every
 seat resolves against the mandate docket, that every model-judged finding reaches the debt
 paragraph, that every refused sentence has a replacement, that the roll-up covers each change
 exactly once, that the inventory counts reconcile against the cards actually present, and that
@@ -249,18 +249,20 @@ this genre dies of.
 - **Nothing reaches the page except through `chartdata.json`.** Re-query freely; write the
   result down first. The one exemption is a document number the mandate docket declares —
   a citation is not a measurement, and citing an instrument no docket names is caught.
-- **The Downstream is a comparison, not a figure.** Recurring cost on one side, the exposure it
-  makes visible on the other, in one sentence, and let the asymmetry argue: *twenty-five short
-  memos a year is the entire cost of making a $647.2M pattern visible at award time.* State only
-  the benefit and you are asking for a blank cheque; state only the cost and you are arguing
-  against yourself. Its label carries the basis, so a reader can reject your projection instead
-  of your report.
+- **The Downstream is a comparison, not a figure, so it is three fields.** `cost`, the recurring
+  effort; `exposure`, what the cost makes visible; and `asymmetry`, the sentence weighing them:
+  *twenty-five short memos a year is the entire cost of making a $647.2M pattern visible at award
+  time.* State only the benefit and you are asking for a blank cheque; state only the cost and
+  you are arguing against yourself. **Both sides carry a figure you computed, the two figures
+  differ, and the sentence carries one from each** — the gate checks all three, because no check
+  over a single sentence can tell which side of a comparison a number is on.
 - **A finding that reaches no seat is context.** Demote it, count it in the inventory, and say
   which seat it would have needed. Do not delete it and do not invent a seat for it.
 - **Every policy change names a document.** "Someone should" is not a policy change. If no
   document would carry the sentence, the finding is not ready and belongs in context.
-- **Label every Downstream `exact` or `estimated`.** An unlabelled magnitude is read as exact,
-  and most of them are not.
+- **Label every Downstream `exact` or `estimated`, and write `basis` as the projection alone.**
+  An unlabelled magnitude is read as exact and most of them are not. The label line is composed
+  from the two, so a basis opening with `exact` stutters when the page renders it.
 - **Concentration before total, every time.** Aggregates on this kind of data are traps and
   singles are findings.
 - **Prefer the instrument to the actors.** Where a shape can be written either way, write the

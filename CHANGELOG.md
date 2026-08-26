@@ -8,6 +8,20 @@ The gallery itself is a working repo, but the plugin it compiles into is version
 ## Unreleased
 
 ### Added
+- **`/redline`'s Downstream is three fields rather than one sentence** — `cost`, the `exposure`
+  it is set against, and the `asymmetry` sentence that weighs them. The format doc had required a
+  comparison since the field existed; nothing enforced it, and both Downstreams in the repo's own
+  passing fixture were benefit-only. The cheap version of this check does not exist: "two distinct
+  figures that resolve" passes both of those fixtures, so it scores zero against the rule it would
+  supposedly approximate. Sidedness is only checkable if the sides are separate fields. Two new
+  checks — `downstream-priced` (both sides carry a computed figure, and the two differ) and
+  `asymmetry-binds` (the sentence carries a figure from each side, compared as resolved values
+  rather than as substrings, because a gate that scrapes prose can be satisfied by prose).
+  **What this does not buy is stated in the doc**: three labelled boxes are three plausible
+  clauses. The shape prevents a one-sided Downstream, not an empty one.
+- **`broken-hollow`**, the fixture that motivated the whole pass: a redline with every routing
+  field filled with something shaped like an answer, which passed all four routing checks and
+  exited 0. It now fails four.
 - **Four checks on `/redline`'s routing contract, each for a defect that was exactly
   detectable and going undetected.** `seat-codes-mnemonic` rejects `S1`, because a serial code
   is well formed and unreadable — it is the defect that produced an unreadable `Owner: S2` on a
@@ -145,6 +159,11 @@ The gallery itself is a working repo, but the plugin it compiles into is version
   data sits in, the name carries it. Renaming after delivery costs a rebuild and a republish.
 
 ### Fixed
+- **Nesting the Downstream would have taken it out of the numeral gate without failing
+  anything.** `proseOf` reached for `policyChange.downstream` as a scalar; an object is truthy,
+  survives the filter, and joins as `[object Object]`, which carries no digits. Probed with
+  `$9,999,999` and `12345678` as pure invention, the gate reported zero failures. The three parts
+  are named individually, and the probe is now caught.
 - **The passing redline fixture stuttered its own label line, and the gate could not see it.**
   `basis` repeated the word `label` already holds — `label: "exact"` beside
   `basis: "exact, counted over the 22 months"` — so a page composing `*{label}, {basis}*` reads
