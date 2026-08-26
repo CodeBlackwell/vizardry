@@ -5,6 +5,31 @@ The gallery itself is a working repo, but the plugin it compiles into is version
 `package.json` is the single source of that version and `build-plugin.mjs` stamps it into
 `plugin/.claude-plugin/plugin.json`. Entries carry both the version and the date.
 
+## Unreleased
+
+### Added
+- **`/redline`**, a seventh skill that runs downstream of a built `/datastorm` report and turns
+  its aggregates into policy changes routed to named seats. The unit is not a chart option but
+  a change: each finding carries the document it is written into, the office that signs it, a
+  magnitude labelled `exact` or `estimated`, and the sentence that kills it. Ten inefficiency
+  shapes in `references/inefficiency-shapes.md`, ordered so that shapes interrogating the
+  measuring instrument outrank shapes ranking the actors — those land on a document the
+  recipient owns, and they name no private party.
+- **`/mandate-docket`**, its precondition. The authority analog of `/data-docket`: who can
+  impose, who can only recommend, who is named but out of reach, and which documents each seat
+  already owes. `/redline` refuses to run without one, so the two ship together.
+- **`verify-redline.mjs`**, a fourth verifier. Sixteen deterministic checks over `redline.json`
+  rather than over the rendered page, because a gate that scrapes prose can be satisfied by
+  prose. Card completeness, Owner and Written-into on every change, seats resolving against the
+  mandate docket, refusals paired in both directions, the roll-up covering each change exactly
+  once, the inventory reconciling, and **every numeral in the prose resolving to a value in
+  `chartdata.json`**. That last one is an error here where `/datastorm`'s verifier warns: a
+  policy change priced with a number nobody computed is the failure this genre dies of. A
+  missing mandate docket is a hard error rather than a skipped check.
+- **Sixteen broken fixtures and 24 tests**, one deliberate mutation per check class, mirroring
+  `verify.test.ts` and `report.test.ts`. A verifier that cannot discriminate is worse than none,
+  because it is believed.
+
 ## 1.5.0 — 2026-08-24
 
 ### Added
