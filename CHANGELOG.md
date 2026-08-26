@@ -37,6 +37,34 @@ The gallery itself is a working repo, but the plugin it compiles into is version
   "the guidance" merge into one roll-up row and read as agreement when neither was aimed. No
   check can see it — both entries are complete and the count reconciles — so the skill says to
   check it by hand.
+- **`/redline` tuned against a three-arm eval**, its first cold runs: two agents given the whole
+  skill and one given only the format doc, none able to see the human-written artifact for the
+  same task. Every arm passed the gate and built a page, and the notes they were asked for found
+  more than the deliverables did.
+  - **The concentration sweep produced numbers its own gate rejected.** Step 3 is mandatory and
+    computes top-1 shares; step 2 requires every numeral to exist in `chartdata.json`; a
+    read-only substrate made the second impossible, so both skill arms had to downgrade every
+    swept concentration to a raw pair. `--data` now repeats, because the rule is that a number
+    passes through *a* file, not one particular file, and step 2 teaches the second file.
+  - **The citation exemption broke on a trailing comma.** `DFARS 227,` failed where `DFARS 227
+    and` passed, because the thousands-separator class ate the comma. It cost one arm its only
+    failing check.
+  - **The legal shapes are now printed on failure.** The ablation arm probed roughly 400 names
+    against the gate, found three, and shipped ten cards carrying two shapes — not because two
+    described them but because two was the whole vocabulary reachable without the shapes file. A
+    closed vocabulary a writer cannot enumerate is a trap.
+  - **The frame is numeral-checked now**, along with `reserve`, and `struck` entries have their
+    charts gated. The format doc claimed the frame was checked and it was not read at all.
+  - **Posture and shape spread print as signals.** A report that is all one shape has found one
+    defect described five ways, which is worth knowing for the reason the posture count exists.
+  - **Two flat contradictions are resolved**: context entries could not both carry "nothing else"
+    and name the seat they would have needed, and the palette could not be both inherited and
+    re-picked. Step 8 now says the shipped `page.html` is `/datastorm`'s brainstorm shell rather
+    than a redline template, and records that `build.mjs` resolves d3 from a `node_modules` above
+    the working directory.
+  - **Step 7 no longer claims the inventory is mechanical unconditionally.** It is mechanical
+    only when step 1 handed over an option list; without one it is authored, and the skill now
+    says to declare that in the frame rather than let a reconciling count imply closure.
 - **Sixteen broken fixtures and 24 tests**, one deliberate mutation per check class, mirroring
   `verify.test.ts` and `report.test.ts`. A verifier that cannot discriminate is worse than none,
   because it is believed.

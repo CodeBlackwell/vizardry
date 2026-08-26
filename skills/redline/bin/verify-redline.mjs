@@ -43,7 +43,11 @@ const flag = (name) => {
   const i = args.indexOf(name);
   return i === -1 ? null : args.splice(i, 2)[1];
 };
-const dataFlag = flag('--data');
+// --data repeats. Step 2's rule is that no number reaches the page without passing through a
+// file, not that it passes through one particular file — so a read-only substrate is answered by
+// writing your own computed values beside it and passing both, rather than by going unwritten.
+const dataFlags = [];
+for (let next = flag('--data'); next; next = flag('--data')) dataFlags.push(next);
 const mandateFlag = flag('--mandate');
 const [redlinePath] = args;
 
@@ -63,10 +67,11 @@ const pick = (explicit, name) => {
   }
   return null;
 };
-const dataPath = pick(dataFlag, 'chartdata.json');
+const dataPaths = dataFlags.length ? dataFlags : [pick(null, 'chartdata.json')].filter(Boolean);
+const dataPath = dataPaths.join(', ');
 const mandatePath = pick(mandateFlag, 'mandate.md');
 
-if (!dataPath) {
+if (!dataPaths.length) {
   console.error('no chartdata.json — the numeral gate cannot run without it, and a redline ' +
     'whose numbers were never computed is the failure this tool exists to catch');
   process.exit(1);
@@ -92,7 +97,7 @@ const parse = (path, what) => {
   }
 };
 const redline = parse(redlinePath, 'the redline');
-const data = parse(dataPath, 'the computed aggregates');
+const data = Object.assign({}, ...dataPaths.map((f) => parse(f, 'the computed aggregates')));
 const mandate = readFileSync(mandatePath, 'utf8');
 
 const findings = redline.findings ?? [];
@@ -141,7 +146,9 @@ const numeralsIn = (text) => {
   const found = [];
   // The lookbehind is doing real work: it keeps `F1`, `opt-a2` and the `08`/`25` of an ISO
   // date out of the gate, so an address and a datestamp are not mistaken for measurements.
-  const re = /(?<![A-Za-z0-9_-])\$?\d[\d,]*(?:\.\d+)?\s*(?:%|[kKmMbB]\b)?/g;
+  // Thousands groups are exactly three digits, which is what keeps a trailing comma out of the
+  // match: `DFARS 227,` must look up as `DFARS 227` or the exemption fails on punctuation alone.
+  const re = /(?<![A-Za-z0-9_-])\$?\d+(?:,\d{3})*(?:\.\d+)?\s*(?:%|[kKmMbB]\b)?/g;
   const source = String(text);
   for (const match of source.matchAll(re)) {
     const raw = match[0];
@@ -193,7 +200,8 @@ check('card-fields', missingFields.length === 0, missingFields.length ? missingF
 
 const badShape = findings.filter((f) => !SHAPES.has(f.shape)).map((f) => `${f.id}: ${f.shape}`);
 check('shape-known', badShape.length === 0,
-  badShape.length ? badShape.concat('shapes come from references/inefficiency-shapes.md') :
+  badShape.length ? badShape.concat(`legal shapes: ${[...SHAPES].join(', ')}`,
+    'each is a section of references/inefficiency-shapes.md') :
     ['if no shape fired, ask why this is a finding rather than context']);
 
 const badPosture = findings.filter((f) => !POSTURES.has(f.posture)).map((f) => `${f.id}: ${f.posture}`);
@@ -233,7 +241,7 @@ check('seat-resolves', unresolved.length === 0,
     : [`every seat resolves against ${mandatePath}`]);
 
 const chartKeys = new Set(Object.keys(data));
-const missingCharts = findings.filter((f) => f.chart && !chartKeys.has(f.chart))
+const missingCharts = [...findings, ...struck].filter((f) => f.chart && !chartKeys.has(f.chart))
   .map((f) => `${f.id}: chart ${f.chart} is not a key in ${dataPath}`);
 check('charts-exist', missingCharts.length === 0, missingCharts.length ? missingCharts :
   ['every Chart names an aggregate that exists — a described-but-unbuilt chart proves nothing']);
@@ -286,7 +294,8 @@ check('inventory-reconciles', drift.length === 0, drift.length ? drift :
 
 // --- the numeral gate -----------------------------------------------------------------------
 const strays = [];
-for (const entry of [...findings, ...context, ...struck, ...refusals, ...declined]) {
+const frameProse = { id: 'frame', headline: frame.verificationDebt, magnitude: frame.denominators };
+for (const entry of [frameProse, ...findings, ...context, ...struck, ...reserve, ...refusals, ...declined]) {
   for (const { raw, candidates } of numeralsIn(proseOf(entry))) {
     // Only the DATA side is allowed to round. Rounding the prose numeral too would let $4.2M
     // satisfy itself against a 4 sitting anywhere in the file, which is a gate with a hole in it.
@@ -308,5 +317,21 @@ for (const c of checks) {
   failed = true;
   for (const line of c.detail) console.log(`        ${line}`);
 }
+// Signals, not checks. A report that is all one posture has found a scandal rather than a policy,
+// and a report that is all one shape has found one defect described five ways — both are worth
+// knowing before it ships and neither is a reason to block a build.
+const tally = (xs) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map())]
+  .sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ');
+if (findings.length) {
+  console.log(`  signal  posture: ${tally(findings.map((f) => f.posture))}`);
+  console.log(`  signal  shape:   ${tally(findings.map((f) => f.shape))}`);
+  const [, top] = [...findings.reduce((m, f) => m.set(f.shape, (m.get(f.shape) ?? 0) + 1), new Map())]
+    .sort((a, b) => b[1] - a[1])[0];
+  if (findings.length >= 4 && top / findings.length > 0.5) {
+    console.log('          over half the findings are one shape — say so in the frame, or ask ' +
+      'whether they are one finding described several ways');
+  }
+}
+
 console.log('');
 process.exit(failed ? 1 : 0);

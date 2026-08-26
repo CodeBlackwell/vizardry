@@ -125,8 +125,11 @@ verification debt in the frame". Restating is how two copies drift apart.
 ## Context
 
 Measurements that place the findings without being findings. A context entry needs **Headline**,
-**Magnitude** and **Chart**, and nothing else: it routes to no seat, and that is precisely what
-makes it context rather than a finding.
+**Magnitude** and **Chart**, plus a **Reading** saying what it places and, when it was demoted
+from a finding, which seat it would have needed. It carries no Tasker and no Policy change: it
+routes to nobody, and that is precisely what makes it context rather than a finding. Keep the
+routing sentence in `reading` — putting it in `magnitude` buries authority prose in the field the
+gate reads as a measurement.
 
 **This section is where a demoted candidate lands.** A measurement that could not name a seat
 and a document is not thrown away; it is placed here, and the inventory count in the frame
@@ -228,6 +231,10 @@ that scrapes prose can be satisfied by prose.
 | `declined` | `id`, `reason` — never empty |
 | `refusals` | `wrong` and `instead`, both required |
 | `rollup` | `document`, `owner`, and `findings`, the ids that document absorbs |
+| `standsOn` | what every figure stands on: the surfaces, the denominators, the frame |
+| `mustRefuse` | the standing refusals — what this data may never be asked, independent of any finding |
+| `mandate` | the bibliography: the seats cited by address and title, the directives by section |
+| `rollupThesis` | the one sentence the roll-up table argues, convergence or its absence |
 
 A finding carries an `id` plus the ten fields: `headline`, `magnitude`, `chart`, `shape`,
 `posture`, `seat`, `tasker`, `killsIt`, `provenance`, and `policyChange` — whose own keys are

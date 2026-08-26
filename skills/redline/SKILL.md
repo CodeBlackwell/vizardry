@@ -58,7 +58,7 @@ Read four things out of it:
 | `chartdata.json` | every aggregate already computed and already verified. This is your evidence base **and** your numeral allowlist. |
 | `charts.js` | render functions that already passed the twelve per-option checks. Reuse them; do not redraw what exists. |
 | the option list | with each option's declared `dataKeys`, which tells you what columns it touched |
-| the palette | already CVD-validated. Do not re-pick it. |
+| the palette | already CVD-validated for that report. Inherit it when you are extending that report; re-pick and re-validate when the redline stands alone, which is what `page.html`'s own header tells you to do. Either way run `validate-palette.mjs`. |
 
 **Read the report as an evidence substrate, not as a candidate list.** Its options were selected
 for what is worth drawing, which is a different question from what forces a change, and a
@@ -66,6 +66,10 @@ finding is not disqualified for having no option behind it. What consuming the r
 is three things a fresh start does not: computed numbers that have already been checked, charts
 that already render, and — the one that matters most — a **closed inventory** that falls out of
 the data rather than out of your memory. See step 7.
+
+**All four are the built report's, and a substrate that is only `chartdata.json` gives you one.**
+That is a runnable case, not a refusal — but it costs the option list, so read step 7 before you
+start rather than after, and expect to write more render functions than you reuse.
 
 The data docket, if there is one, comes along as meaning context under the same rule
 `/datastorm` uses: **the profile wins on facts and the docket wins on meaning.**
@@ -84,6 +88,13 @@ drew.
 **Re-querying the source data is allowed and expected**, and it comes with one absolute rule:
 
 > **Write the result into `chartdata.json` before writing any sentence that uses it.**
+
+**When the substrate is read-only** — a shared input, someone else's build, a file you must not
+edit — write your values to a second file instead and pass both: `--data chartdata.json --data
+redline-data.json`. The rule is that no number reaches the page without passing through a file,
+not that it passes through one particular file. What you may never do is leave the number
+unwritten, and that includes the shares step 3 computes: a swept concentration that exists only
+in your head is exactly the kind of number this gate is built to stop.
 
 Otherwise the numeral gate stops meaning anything and the report reacquires the failure mode it
 exists to prevent. The allowlist is an append target, not a fence. What it forbids is a number
@@ -168,9 +179,16 @@ plausible document was named.
 
 Then close the inventory. Every measurement the report touched is placed in exactly one bucket
 — finding, context, drawn to be struck, held in reserve, declined — and the frame states the
-counts. **This is mechanical rather than authored**, because the option list you ingested in
-step 1 is a set, and the buckets are a partition of it plus whatever step 2 added. That is the
-single strongest reason this skill consumes a built report instead of running beside one.
+counts. **This is mechanical rather than authored when — and only when — step 1 handed you an option
+list**, because that list is a set and the buckets are a partition of it plus whatever step 2
+added. That is the single strongest reason this skill consumes a built report instead of running
+beside one.
+
+**If the option list was not in the inputs, the inventory is authored and you must say so in the
+frame.** The gate checks that the counts reconcile against the cards you wrote, which proves
+arithmetic and not closure: a report that quietly dropped four candidates reconciles just as
+green as one that placed them. Name the substrate you actually had, and treat a missing option
+list as the report's largest piece of verification debt rather than as a formatting detail.
 
 ### 8. Write `redline.json`, then assemble and verify
 
@@ -180,8 +198,16 @@ and the roll-up; its shape is in `references/redline-format.md`. The page is bui
 checking the data checks the page, and a field cannot be rendered without being gated.
 
 The page itself is `/datastorm`'s, unchanged: `page.html`, `chart-kit.js`, `build.mjs`,
-`validate-palette.mjs`. Only the card template and the section order differ, and both are in
-`references/redline-format.md`. Do not re-pick the palette and do not rewrite the assembler.
+`validate-palette.mjs`. **The shipped `page.html` is `/datastorm`'s brainstorm shell** — its
+sections are Recommended through Rejected and its card fields are `encoding`, `exemplar`,
+`failure`, none of which a redline has. Keep its `<style>` block, its tokens, its rail and its
+card CSS; replace the body with the nine sections and the card shape in
+`references/redline-format.md`, which gives them in markdown rather than as an HTML template.
+Generate the page from `redline.json` so the two cannot drift. Do not rewrite the assembler.
+
+`build.mjs` resolves d3 from a `node_modules` above the working directory. A redline built inside
+a repo that has none — which is most of them, since dockets and corpora live in Python trees —
+fails there. Point it at one, or run the assembly from a directory that has it.
 
 ```bash
 node <skill>/bin/verify-redline.mjs redline.json --data chartdata.json --mandate docs/mandate.md
