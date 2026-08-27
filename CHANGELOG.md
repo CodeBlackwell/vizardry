@@ -5,6 +5,60 @@ The gallery itself is a working repo, but the plugin it compiles into is version
 `package.json` is the single source of that version and `build-plugin.mjs` stamps it into
 `plugin/.claude-plugin/plugin.json`. Entries carry both the version and the date.
 
+## 1.6.1 — 2026-08-27
+
+### Fixed
+- **The numeral allowlist attributed a value to whichever constant the walk reached first.**
+  1.6.0 made it a `Map` so `--emit` could report that `22` is `opt-a2.windowMonths` rather than
+  merely that it resolves; keeping one path per rendering meant a value reachable from two
+  constants always reported the earlier one, which is an artifact of iteration order handed to a
+  reviewer as a fact the run resolved. Measured over eight real reports, reviewers in four of
+  eight offices spent a `doubt` chasing a misattribution; every number was right and only the
+  diagnostic was wrong. The allowlist keeps every path now.
+- **Six prose fields carried numbers and were never scanned**: `standsOn`, `mustRefuse`,
+  `rollup`, `seats`, `policyChange.owner` and the frame's `recipient`. `standsOn` is what the
+  format calls the short list binding the whole report and it carries the denominators with their
+  populations, so the gate was blind in the most densely numeric prose on the page. Audited
+  across eight real reports the hole was real and unused — every numeral in them was a citation
+  or a date. 131 numerals now enter the gate that did not. `policyChange.owner` is the near miss:
+  `downstream` was deliberately named field by field with a comment explaining that a spread
+  would carry it out of the gate as `[object Object]`, and the same care stopped one field short.
+- **`charts-exist` could not tell an option key from a container.** It tests a card's `chart`
+  against the top level of `chartdata.json`, which is exactly right against a built `/datastorm`
+  report and vacuous against anything else: handed a substrate whose top level is
+  `{figures, meta}`, the only legal value is `figures`, every card names it, and the check reports
+  that every chart exists while nothing is addressed. `charts-are-aggregates` now fails a chart
+  holding more sub-keys than all its siblings combined, and a report whose charted cards all name
+  one key. Stated as a ratio rather than a threshold so a four-option fixture and a
+  twenty-two-option report are judged the same way.
+- **The page gate read a struck entry's rail label from a field the renderer never used.**
+  `rail()` builds the struck group from `reading`, because `struckCard` renders a fixed
+  `Drawn to be struck` title and has no headline slot; `rail-matches-data` compared against
+  `headline ?? reading`, so a struck entry carrying both failed on a value nothing on the page
+  disagreed about, with a message blaming a card that renders no headline at all. It compares
+  against the field the renderer used now, and the new `struck-fields` check names a headline
+  written there as unrendered rather than letting the sentence vanish at render.
+
+### Changed
+- **`--emit` reports `sources` (an array, capped at six) and `sourceCount` instead of a single
+  `source`.** Anything reading `evidence.json` needs updating. The count is the point: over a
+  485-constant substrate a value above 1000 resolves unambiguously 75% of the time and an integer
+  under 30 does 2% of the time, so membership is strong evidence for one and nearly none for the
+  other, and a gate that hides which case it is in is claiming more than it proved.
+- **Two new checks can fail a redline that passed before.** Both are true positives by
+  construction — a chart naming the whole substrate, and a headline the page never renders — but
+  a report green on 1.6.0 is not guaranteed green here.
+
+### Known
+- **The numeral allowlist still legitimises small integers, and the obvious fix does not work.**
+  Pruning the zero-decimal forms of the scaled variants was measured to remove 44 of 5368 keys
+  and not one integer from 1 to 30: small integers are not manufactured by scaling, they are
+  genuinely in the data, `5` appearing as nine separate literals. So `2 percentages` clears
+  `numerals-in-data` by coincidence rather than by computation, which bites hardest on the
+  `Downstream` cost side where no measured quantity can exist. The fix is a declared `literal`
+  escape plus path citation scoped to non-distinctive numerals, which changes the format and is
+  not in this release.
+
 ## 1.6.0 — 2026-08-26
 
 ### Added
