@@ -348,6 +348,11 @@ label word — and `downstream`, itself `{ cost, exposure, asymmetry }`.
 `frame.inventory` holds the five counts under exactly those bucket names, because the gate
 compares each against the entries actually present. `chart` names a top-level key of
 `chartdata.json`, which is what makes "the chart exists" a set operation rather than a promise.
+That key must address **one aggregate**, not the file it sits in: pointing every card at a
+substrate dump satisfies "the key is real" while addressing nothing, so the gate also fails a
+chart holding more sub-keys than all its siblings combined, and fails a report whose cards all
+name the same key. A struck entry carries `reading` and `strike` and no headline — the page has
+nowhere to render one, so a headline written there is a sentence only the JSON can see.
 
 ## The rules a redline is read back against
 
@@ -356,7 +361,9 @@ Before handing it over, read it against these and fix what fails:
 - **Every number in the prose exists in `chartdata.json`.** This is the single check that kills
   the failure mode these reports die of. A figure that reached the page without passing through
   the data file is a figure nobody computed. When a finding needs a number nobody drew, run the
-  query and **write the result back into `chartdata.json`** before writing the sentence.
+  query and **write the result back into `chartdata.json`** before writing the sentence. Every
+  prose field is gated, not only the card's: the roster, the roll-up, what the data must refuse,
+  `standsOn` and the frame's recipient all carry numbers and are all read.
 - **Every policy change names an Owner and a Written into.** Both, always. One without the other
   is a change with no address.
 - **Every Downstream is labelled `exact` or `estimated`.** An unlabelled magnitude is read as

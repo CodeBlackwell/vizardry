@@ -124,9 +124,17 @@ const check = (name, ok, detail) => checks.push({ name, ok: !!ok, detail: [].con
 
 // --- the numeral allowlist ---------------------------------------------------------------
 // Every number anywhere in chartdata, plus the renderings a writer actually uses for it. A Map
-// rather than a Set because each form remembers where it came from: the gate only needs `has`,
-// but `--emit` needs to tell a reviewer that 22 is `opt-a2.windowMonths` rather than merely
-// that 22 resolves. First writer wins, so a form reached by two paths reports the earlier one.
+// of Sets rather than of strings because each form remembers EVERY path that produced it: the
+// gate only needs `has`, but `--emit` has to tell a reviewer that 22 is `opt-a2.windowMonths`
+// rather than merely that 22 resolves — and over a real substrate 22 is reachable from nine
+// constants, not one. Keeping only the first writer reported whichever the walk happened to
+// reach first, which is an artifact of iteration order handed to a reviewer as a fact.
+//
+// The set size is also the only honest measure of how much this gate proved. Measured over a
+// 485-constant substrate: a value above 1000 is reachable from 1.4 paths on average and is
+// unambiguous 75% of the time, while an integer under 30 is reachable from 13.7 and is
+// unambiguous 2% of the time. Membership is strong evidence for the first and nearly none for
+// the second, so `--emit` reports the count and lets a reviewer weigh it.
 const values = new Map();
 const addValue = (n, from) => {
   if (!Number.isFinite(n)) return;
@@ -136,7 +144,8 @@ const addValue = (n, from) => {
     if (!Number.isFinite(form)) continue;
     for (const key of [String(form), form.toFixed(0), form.toFixed(1), form.toFixed(2),
       String(Math.round(form))]) {
-      if (!values.has(key)) values.set(key, from);
+      if (!values.has(key)) values.set(key, new Set());
+      values.get(key).add(from);
     }
   }
 };
@@ -206,8 +215,11 @@ const proseOf = (entry) => [
   // whole field here would take the Downstream out of the numeral gate without failing anything.
   entry.policyChange?.downstream?.cost, entry.policyChange?.downstream?.exposure,
   entry.policyChange?.downstream?.asymmetry,
-  entry.policyChange?.writtenInto, entry.reading, entry.strike,
-  entry.wrong, entry.instead, entry.reason
+  // `owner` sat outside this list for the same reason `downstream` nearly did, and with less
+  // excuse: it is a plain string sitting between two fields that were named.
+  entry.policyChange?.writtenInto, entry.policyChange?.owner, entry.reading, entry.strike,
+  entry.wrong, entry.instead, entry.reason, entry.question, entry.decides, entry.title,
+  entry.document, entry.owner
 ].filter(Boolean).join(' ');
 
 // --- structure ---------------------------------------------------------------------------
@@ -221,6 +233,17 @@ const missingFields = findings.flatMap((f) =>
     .map((k) => `${f.id ?? '(no id)'}: missing ${k}`));
 check('card-fields', missingFields.length === 0, missingFields.length ? missingFields :
   ['every finding carries all ten fields; the format doc groups them in four so ten is writable']);
+
+// A struck entry renders a fixed `Drawn to be struck` title, `reading` under Invites and
+// `strike` under Struck. There is no headline slot, so a headline written on one is a sentence
+// only this file can see: it never reaches the page and never reaches a reader. Easy to author,
+// because a headline is what every finding and context card carries — so it is named here
+// rather than dropped in silence, and the author gets to choose which sentence survives.
+const deadStruck = struck.filter((s) => s.headline)
+  .map((s) => `${s.id}: headline "${s.headline}" is never rendered — a struck entry shows only ` +
+    'its reading and its strike, so fold the sentence into one of those or drop it');
+check('struck-fields', deadStruck.length === 0, deadStruck.length ? deadStruck :
+  ['struck entries carry only fields the page has somewhere to put']);
 
 const badShape = findings.filter((f) => !SHAPES.has(f.shape)).map((f) => `${f.id}: ${f.shape}`);
 check('shape-known', badShape.length === 0,
@@ -423,6 +446,41 @@ const missingCharts = [...findings, ...struck].filter((f) => f.chart && !chartKe
 check('charts-exist', missingCharts.length === 0, missingCharts.length ? missingCharts :
   ['every Chart names an aggregate that exists — a described-but-unbuilt chart proves nothing']);
 
+// `charts-exist` is a set operation against the top level, which is exactly right against a
+// built /datastorm report whose top level is option-keyed, and vacuous against anything else.
+// Handed a substrate whose top level is `{figures, meta}`, the only legal Chart value is the
+// literal string `figures`, every card names it, and the check reports that every chart exists
+// while no card addresses anything. That is the failure `charts-exist` says it catches.
+//
+// Two ways a Chart fails to address an aggregate, and both are set operations too rather than
+// guesses about the value's shape -- this gate does not own the chartdata dialect and must not
+// start requiring one.
+const charted = [...findings, ...struck].filter((f) => f.chart);
+const namedCharts = new Set(charted.map((f) => f.chart));
+// A container is the thing the rest of the data sits inside, and that is measurable without a
+// threshold: it holds more than all its siblings combined. A real aggregate carries a handful of
+// fields beside a dozen peers carrying the same; a substrate dump carries hundreds beside them.
+// Stated as a ratio rather than a constant so it holds for a four-option fixture and a
+// twenty-two-option report alike.
+const subKeys = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).length : 0);
+const containers = [...namedCharts].filter((key) => {
+  const siblings = [...chartKeys].filter((k) => k !== key).reduce((n, k) => n + subKeys(data[k]), 0);
+  return subKeys(data[key]) > siblings;
+});
+const vacuous = [
+  ...(charted.length > 1 && namedCharts.size === 1
+    ? [`all ${charted.length} charted cards name ${[...namedCharts][0]} — one key cannot be the ` +
+      'evidence for every card, so either the aggregates were never split out or the Chart ' +
+      'field is decorative']
+    : []),
+  ...containers.map((key) => `${charted.filter((f) => f.chart === key).map((f) => f.id).join(', ')}: ` +
+    `chart ${key} holds ${subKeys(data[key])} sub-keys, more than every other top-level key in ` +
+    `${dataPath} put together — it is the substrate rather than one aggregate; emit the ` +
+    'per-finding aggregate as its own top-level key and point the card at that')
+];
+check('charts-are-aggregates', vacuous.length === 0, vacuous.length ? vacuous :
+  ['every Chart addresses one aggregate rather than the file it sits in']);
+
 // --- honesty ------------------------------------------------------------------------------
 const debtText = String(frame.verificationDebt ?? '');
 const judged = findings.filter((f) => f.provenance === 'model-judged');
@@ -471,8 +529,27 @@ check('inventory-reconciles', drift.length === 0, drift.length ? drift :
 
 // --- the numeral gate -----------------------------------------------------------------------
 const strays = [];
-const frameProse = { id: 'frame', headline: frame.verificationDebt, magnitude: frame.denominators };
-for (const entry of [frameProse, ...findings, ...context, ...struck, ...reserve, ...refusals, ...declined]) {
+// `standsOn` is the section the format calls the short list that binds the whole report, and it
+// carries the denominators with their populations and counts. It is the most densely numeric
+// prose on the page, so leaving it unscanned left the gate blind exactly where a reader looks
+// first. Same for the roster, the roll-up and what the data must refuse.
+const frameProse = {
+  id: 'frame',
+  headline: frame.verificationDebt,
+  magnitude: frame.denominators,
+  reading: redline.standsOn,
+  strike: redline.rollupThesis,
+  reason: frame.recipient
+};
+// Field by field, never spread: these are arrays of objects, and an object survives
+// `.filter(Boolean)` to join as `[object Object]`, which carries no digits and so carries the
+// whole section out of the gate without failing anything.
+const rosterProse = seats.map((seat, i) => ({ id: `seat ${seat.code ?? i + 1}`, ...seat }));
+const rollupProse = rollup.map((row, i) => ({ id: `rollup row ${i + 1}`, ...row }));
+const mustRefuseProse = (redline.mustRefuse ?? [])
+  .map((m, i) => ({ id: `must-refuse ${i + 1}`, ...m }));
+for (const entry of [frameProse, ...rosterProse, ...rollupProse, ...mustRefuseProse,
+  ...findings, ...context, ...struck, ...reserve, ...refusals, ...declined]) {
   for (const { raw, candidates } of numeralsIn(proseOf(entry))) {
     // Only the DATA side is allowed to round. Rounding the prose numeral too would let $4.2M
     // satisfy itself against a 4 sitting anywhere in the file, which is a gate with a hole in it.
@@ -530,19 +607,33 @@ if (reviewPath) {
 }
 
 // --- the evidence artifact ------------------------------------------------------------------
-// What a reviewer judges instead of re-deriving. Every value here is a fact this run resolved:
-// the seat behind a code, the chartdata path behind a numeral, the refusal that answers a
-// finding. That is the whole point -- a reviewer handed the source has to redo the resolution
-// before it can disagree with it, and a reviewer that redoes the resolution is a second verifier
-// rather than a second opinion.
+// What a reviewer judges instead of re-deriving: the seat behind a code, the chartdata paths
+// behind a numeral, the refusal that answers a finding. That is the whole point -- a reviewer
+// handed the source has to redo the resolution before it can disagree with it, and a reviewer
+// that redoes the resolution is a second verifier rather than a second opinion.
+//
+// A figure carries every path it resolved through, not one. Where `sourceCount` is high the run
+// proved only that the numeral appears somewhere in the substrate, and saying so is the
+// difference between evidence and an assertion a reviewer has to go and check.
 //
 // Deliberately absent: mark counts. Those are page facts, this gate never opens the page, and a
 // second process merging into this file would let a stale run's data facts survive a rebuild.
 // verify-redline-page.mjs prints its tally as a signal line instead.
+// `sources` is every chartdata path this numeral could have come from, and `sourceCount` is how
+// many there were before the list was capped -- so an ambiguous resolution is shown as ambiguous
+// rather than as a confident guess. A reviewer handed one path for a numeral reachable from nine
+// spends the round checking the emitter instead of the argument.
+const SOURCE_CAP = 6;
 const figuresIn = (text) => numeralsIn(String(text ?? '')).map(({ raw, candidates }) => {
   const form = candidates.flatMap((n) => [String(n), n.toFixed(1), n.toFixed(2)])
     .find((k) => values.has(k));
-  return { raw: raw.trim(), value: candidates[0], source: form === undefined ? null : values.get(form) };
+  const paths = form === undefined ? [] : [...values.get(form)];
+  return {
+    raw: raw.trim(),
+    value: candidates[0],
+    sources: paths.slice(0, SOURCE_CAP),
+    sourceCount: paths.length
+  };
 });
 const withFigures = (fields) => Object.fromEntries(
   Object.entries(fields).map(([k, v]) => [k, figuresIn(v)]).filter(([, f]) => f.length));

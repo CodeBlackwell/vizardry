@@ -269,8 +269,10 @@ reviewer owns alone, so concurrent verdicts merge by assignment. The parallel un
 judgment; the write stays serial and stays here.
 
 **A reviewer reads `evidence.json`, never the sources.** It carries what this run resolved — the
-seat behind each code with what the roster says it decides, the chartdata path behind each figure,
-the refusal answering each finding. Hand a reviewer `redline.json` and the docket instead and it
+seat behind each code with what the roster says it decides, the chartdata paths behind each figure
+with a `sourceCount` saying how many there were, the refusal answering each finding. A figure
+reachable from nine constants is reported as reachable from nine: an ambiguous resolution shown as
+ambiguous costs a reviewer nothing, and a confident wrong one costs a round. Hand a reviewer `redline.json` and the docket instead and it
 re-resolves what the run already resolved, which makes it a second verifier rather than a second
 opinion. Run the `--review` pass yourself: an agent that certifies its own work has certified
 nothing.

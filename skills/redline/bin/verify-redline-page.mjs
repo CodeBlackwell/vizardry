@@ -369,7 +369,11 @@ const unlinked = cards.filter((c) => c.id && !document.querySelector(`.rail a[hr
 // holds — and an unchecked copy is one that can drift into saying something the card does not.
 const railDrift = [...findings, ...context, ...struck].flatMap((entry) => {
   const link = entry.id && document.querySelector(`.rail a[href="#${entry.id}"]`);
-  const said = entry.headline ?? entry.reading;
+  // Struck entries are labelled from `reading`, because that is the field `rail()` passes and
+  // `struckCard` has no headline slot to render one from. Preferring a headline here compared
+  // the rail against a field the page never used, and failed on a value nothing on the page
+  // disagreed about — the message even blamed a card that renders no headline at all.
+  const said = struck.includes(entry) ? entry.reading : (entry.headline ?? entry.reading);
   if (!link || typeof said !== 'string' || !said.trim()) return [];
   const label = collapse([...link.querySelectorAll('span')].pop()?.textContent ?? '');
   return label === collapse(said) ? []

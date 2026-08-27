@@ -25,8 +25,16 @@ node <skill>/bin/verify-redline.mjs redline.json --data chartdata.json \
 ```
 
 `evidence.json` carries one block per finding: the seat behind every code with what the roster
-says it decides, the chartdata path behind every figure, the refusal that answers the finding, the
-roll-up row that absorbs it. **A reviewer reads that, not the sources.** Handing a reviewer
+says it decides, the chartdata paths behind every figure, the refusal that answers the finding, the
+roll-up row that absorbs it.
+
+**Read `sourceCount` before trusting a figure's `sources`.** A numeral is reported with every
+chartdata path it could have come from, not the first one walked, because over a real substrate a
+small integer is reachable from a dozen constants and naming one of them is a guess. Where
+`sourceCount` is 1 the run resolved the figure; where it is high the run proved only that the
+numeral appears somewhere in the file, and whether it is the right one is a question for the card's
+own argument. Measured over a 485-constant substrate: a value above 1000 resolves unambiguously
+75% of the time, an integer under 30 does 2% of the time. **A reviewer reads that, not the sources.** Handing a reviewer
 `redline.json` and the docket makes it re-resolve what the run already resolved, and a reviewer
 that re-runs the verifier by hand is a second verifier rather than a second opinion.
 
